@@ -28,12 +28,13 @@
                    (->> response 
                         :body
                         (#(parse-string % true))
-                        :response :apiKey))))
+                        :response 
+                        :apiKey))))
 
 (defn court-data [cookie apikey court date]
   (retrieve-data http/get 
                  (str "https://www.gotcourts.com/de/api/secured/player/club/reservations/" court "?date=" date)
-                 {:headers {"Cookie" cookie 
+                 {:headers {"Cookie"      cookie 
                             "X-GOTCOURTS" (str "ApiKey=\"" apikey "\"")}}
                  (fn [response]
                    (->> response
@@ -49,7 +50,7 @@
   (let [sorted-busy-slots    (sort-by :startTime busy-slots)
         uncleaned-free-slots (reduce 
                                (fn [[first-free & rest-free :as free-slots] 
-                                    {:keys [startTime endTime]}]
+                                    {:keys [startTime endTime] :as reservation}]
                                  ; we begin a free time slot at the end of the period
                                  (cons {:startTime endTime :endTime endTime} 
                                        (if (> startTime (:endTime first-free))
@@ -69,7 +70,8 @@
         court-by-id           (into {} (map (fn [court] [(:id court) court]) courts))
         free-slots            (into {} (map (fn [[court-id reservation]]
                                               (let [court (get court-by-id court-id)]
-                                                [court-id (get-free-slots reservation (:openingTime court) (:closingTime court))])) 
+                                                (when-not (nil? court)
+                                                  [court-id (get-free-slots reservation (:openingTime court) (:closingTime court))]))) 
                                             free-slots-by-court))]
     (vals (merge-with (fn [court free-slots] (assoc court :free-slots free-slots)) court-by-id free-slots))))
 
@@ -77,14 +79,8 @@
   (assoc (select-keys (:club data) [:name :city :country :canonical-name :web :phone]) 
     :courts (free-slots-by-court (:reservations data) (courts-with-times (:courts (:club data))))))
 
-(def fixtures
-  {:hardhof (edn/read-string (slurp "fixtures/hardhof.edn"))})
+(def core-fixtures
+  {:hardhof (edn/read-string (slurp "fixtures/hardhof.edn"))
+   :lengg   (edn/read-string (slurp "fixtures/lengg.edn"))})
 
 
-(defn free-slots [id date]
-  ; TODO cache these data
-  (let [cookie (homepage-cookie)
-        apikey (login-apikey cookie)
-        data   (court-data cookie apikey id date)]
-    {:headers {"Content-Type" "application/json; charset=utf-8"}
-     :body (extract-data data)}))
