@@ -5,8 +5,8 @@
 
 (defn- filter-free-slots [free-slots starttime endtime]
   (filter #(or 
-             (and (< starttime (:endTime %)) (> starttime (:startTime %))) 
-             (and (> endtime (:startTime %)) (< endtime (:endTime %)))) 
+             (and (<= starttime (:endTime %)) (>= starttime (:startTime %))) 
+             (and (>= endtime (:startTime %)) (<= endtime (:endTime %)))) 
           free-slots))
 
 (defn filter-free [courts starttime endtime]
