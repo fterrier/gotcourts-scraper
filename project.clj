@@ -11,11 +11,16 @@
                  [compojure "1.3.4"]
                  [ring/ring-defaults "0.1.2"]
                  [ring/ring-jetty-adapter "1.2.1"]
-                 [ring/ring-json "0.3.1"]]
+                 [ring/ring-json "0.3.1"]
+                 [com.stuartsierra/component "0.2.3"]
+                 [org.immutant/scheduling "2.0.2"]]
   ; :main ^:skip-aot gotcourts.core
   :uberjar-name "gotcourts.jar"
   :target-path "target/%s"
-  :profiles {:dev {:source-paths ["env/dev/src"]
+  :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.3"]
+                                  [ring/ring-mock "0.2.0"]
+                                  [midje "1.6.3"]]
+                   :source-paths ["env/dev/src"]
                    :plugins [[lein-ring "0.8.13"]]
                    :ring {:handler gotcourts.handler/app}}
              :uberjar {:aot :all}})

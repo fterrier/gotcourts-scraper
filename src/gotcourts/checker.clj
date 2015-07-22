@@ -1,6 +1,5 @@
 (ns gotcourts.checker
-  (:require [gotcourts.core :refer [extract-data]]
-            [clojure.edn :as edn]))
+  (:require [clojure.edn :as edn]))
 
 
 (defn- filter-free-slots [free-slots starttime endtime]
