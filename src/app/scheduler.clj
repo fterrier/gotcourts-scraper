@@ -4,37 +4,42 @@
             [gotcourts.checker :refer :all]
             [immutant.scheduling :refer :all]))
 
-(defn gotcourtsjob [scraper]
+(defn gotcourtsjob [scheduler]
+ 
   (fn []
-    (let [data    (retrieve-raw-data scraper "21" "2015-07-20")
+    (let [data    (retrieve-raw-data (:scraper scheduler) "21" "2015-07-20")
           data    (extract-data data)]
       
       (let [courts (:courts data)]
         (println (filter-free courts 54000 57600))))))
 
-; (defn add-job [scheduler type schedule scraper]
-;   (let [
-;         ; job     (j/build
-;         ;           (j/of-type type))
-;         job     (->NoOpJob scraper)
-;         job     (j/finalize job)
-;         trigger (t/build
-;                   (t/start-now)
-;                   (t/with-schedule schedule))]
-;     (qs/schedule scheduler job trigger)))
 
-; (defn initialize [scheduler scraper]
-;   (add-job scheduler NoOpJob (schedule (with-interval-in-seconds 5)) scraper))
+(defn start-job [scheduler job-definition]
+  ""
+  (println job-definition)
+  (update-in scheduler [:jobs] #(conj % (schedule ((resolve (:function job-definition)) scheduler) 
+                                                  (:schedule job-definition)))))
 
-(defrecord Scheduler [job scraper]
+(defn stop-all-jobs [scheduler]
+  ""
+  (doseq [job (:jobs scheduler)]
+    (stop job))
+  (assoc scheduler :jobs nil))
+
+(defrecord Scheduler [job-definitions scraper]
   component/Lifecycle
   (start [component]
          (println ";; Starting scheduler")
-         (let [job 
-               (schedule (gotcourtsjob scraper)
-                         (-> (every 5 :second)))]
-           (assoc component :job job)))
+         ; TODO get job-definitions from database
+         ; each job run should go like this;
+         ; 1. get configured actions for this particular job definition
+         ;    - user, settings, action
+         ; 2. call job definition function (get the data)
+         ; 3. call configured actions in a queue
+         (reduce start-job component job-definitions))
   (stop [component]
         (println ";; Stopping scheduler")
-        (stop job)
-        (dissoc component :job)))
+        (stop-all-jobs component)))
+
+(defn new-scheduler [job-definitions]
+  (map->Scheduler {:job-definitions job-definitions}))

@@ -13,6 +13,7 @@
                  [ring/ring-jetty-adapter "1.2.1"]
                  [ring/ring-json "0.3.1"]
                  [com.stuartsierra/component "0.2.3"]
+                 [com.datomic/datomic-free "0.9.5153"]
                  [org.immutant/scheduling "2.0.2"]]
   ; :main ^:skip-aot gotcourts.core
   :uberjar-name "gotcourts.jar"

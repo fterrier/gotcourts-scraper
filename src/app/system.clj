@@ -4,7 +4,8 @@
              [app.server :as server]
              [app.scheduler :as scheduler]
              [gotcourts.handler :as handler]
-             [gotcourts.scraper :as scraper]))
+             [gotcourts.scraper :as scraper]
+             [immutant.scheduling :refer :all]))
 
 (defn system [config-options]
   (let [{:keys [port]} config-options]
@@ -15,4 +16,5 @@
       :http-server (component/using
                      (server/map->HTTPServer {:port port}) [:routes])
       :scheduler   (component/using 
-                     (scheduler/map->Scheduler {}) [:scraper]))))
+                     (scheduler/new-scheduler [{:function 'app.scheduler/gotcourtsjob
+                                                :scheduler (-> (every 5 :second))}]) [:scraper]))))
