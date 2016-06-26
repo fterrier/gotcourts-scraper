@@ -1,11 +1,7 @@
 (ns app.main
   (:gen-class)
-  (:require [com.stuartsierra.component :as component]
-            [app.system :as app]))
-
+  (:require [mount.core :as mount]))
 
 (defn -main [& args]
   (let [[port] args]
-    (component/start
-      (app/system 
-        {:port (Integer. (or (System/getenv "PORT") "8080"))}))))
+    (mount/start)))

@@ -1,17 +1,16 @@
 (ns app.server
-  (:require [ring.adapter.jetty :as ring]
-            [com.stuartsierra.component :as component]
-            [gotcourts.handler :as handler]))
+  (:require [gotcourts.handler :as handler]
+            [app.scraper :refer [scraper]]
+            [mount.core :refer [defstate]]
+            [ring.adapter.jetty :refer [run-jetty]]
+            [ring.middleware.defaults :refer [api-defaults wrap-defaults]]))
 
+(defn start-www [{:keys [port]} scraper]
+  (-> (handler/app scraper)
+      (wrap-defaults api-defaults)
+      (run-jetty {:join? false
+                  :port port})))
 
-(defrecord HTTPServer [port server routes]
-  component/Lifecycle
-  (start [component]
-         (println ";; Starting HTTP server")
-         (let [server (ring/run-jetty (:routes routes) {:port port
-                                                        :join? false})]
-           (assoc component :server server)))
-  (stop [component]
-        (println ";; Stopping HTTP server")
-        (.stop server)
-        (dissoc component :server)))
+;; TODO hook config
+(defstate web-server :start (start-www {:port 8000} scraper)
+                     :stop (.stop web-server))
