@@ -1,8 +1,24 @@
 (ns app.scheduler
-  (:require [com.stuartsierra.component :as component]
-            [gotcourts.scraper :refer :all]
-            [gotcourts.checker :refer :all]
-            [immutant.scheduling :refer :all]))
+  (:require [chime :refer [chime-ch]]
+            [clj-time.core :as t]
+            [clj-time.periodic :refer [periodic-seq]]
+            [clojure.core.async :as async :refer [<! go-loop]]
+            [mount.core :refer [defstate]]))
+
+
+(defn periodic-check [interval check-fn send-alert-fn]
+  (let [chimes (chime-ch (rest (periodic-seq (t/now)
+                                             (-> 5 t/seconds))))]
+    (go-loop []
+      (when-let [msg (<! chimes)]
+        (prn "Chiming at:" msg)
+        (recur)))
+    chimes))
+
+(defstate scheduler 
+  :start (start-chimes )
+  :stop (async/close! scheduler))
+
 
 ;; (defn gotcourtsjob [scheduler] 
 ;;   (fn []

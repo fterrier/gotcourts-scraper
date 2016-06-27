@@ -27,11 +27,13 @@
              (GET "/" []
                   (free-slots retrieve-data-fn id date identity))
              (GET "/courts" {:keys [params]} []
-                  (free-slots retrieve-data-fn id date (fn [data] 
-                                                (let [courts (:courts data)]
-                                                  (chk/filter-free courts 
-                                                               (read-string (:start params)) 
-                                                               (read-string (:end params))))))))
+                  (free-slots retrieve-data-fn 
+                              id date 
+                              (fn [data] 
+                                (let [courts (:courts data)]
+                                  (chk/filter-free courts 
+                                                   (read-string (:start params)) 
+                                                   (read-string (:end params))))))))
     (route/not-found not-found)))
 
 (defn app [retrieve-data-fn]

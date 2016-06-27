@@ -12,9 +12,8 @@
                  [ring/ring-defaults "0.2.1"]
                  [ring/ring-jetty-adapter "1.5.0"]
                  [ring/ring-json "0.4.0"]
-                 [com.stuartsierra/component "0.3.1"]
-                 [org.immutant/scheduling "2.1.4"]
-                 [mount "0.1.10"]]
+                 [mount "0.1.10"]
+                 [jarohen/chime "0.1.9"]]
   ; :main ^:skip-aot gotcourts.core
   :uberjar-name "gotcourts.jar"
   :target-path "target/%s"

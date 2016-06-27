@@ -11,7 +11,8 @@
 
 (defn filter-free [courts starttime endtime]
   (->> courts
-       (map #(assoc % :filtered-free-slots (filter-free-slots (:free-slots %) starttime endtime)))
+       (map #(assoc % :filtered-free-slots 
+                    (filter-free-slots (:free-slots %) starttime endtime)))
        (remove #(= 0 (count (:filtered-free-slots %))))
        (into [])))
 
