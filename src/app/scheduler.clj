@@ -1,23 +1,44 @@
 (ns app.scheduler
-  (:require [chime :refer [chime-ch]]
-            [clj-time.core :as t]
-            [clj-time.periodic :refer [periodic-seq]]
-            [clojure.core.async :as async :refer [<! go-loop]]
+  (:require [app.tasks :as tasks]
+            [chime :refer [chime-ch]]
+            [clj-time
+             [core :as t]
+             [periodic :refer [periodic-seq]]]
+            [clojure.core.async :as async :refer [<! go go-loop]]
             [mount.core :refer [defstate]]))
 
+(defn- call-and-alert [date old-data extract-fn send-alert-fn]
+  (try 
+    (when-let [data (extract-fn date)]
+      (send-alert-fn old-data data)
+      data)
+    (catch Exception e 
+      (println "Exception trying to execute task" e))))
 
-(defn periodic-check [interval check-fn send-alert-fn]
-  (let [chimes (chime-ch (rest (periodic-seq (t/now)
-                                             (-> 5 t/seconds))))]
-    (go-loop []
+(defn- periodic-check [interval extract-fn send-alert-fn]
+  (let [chimes (chime-ch (rest (periodic-seq (t/now) interval)))]
+    (go-loop [data nil]
       (when-let [msg (<! chimes)]
-        (prn "Chiming at:" msg)
-        (recur)))
+        (println "Chiming at:" msg)
+        (let [data (call-and-alert msg data extract-fn send-alert-fn)]
+          (recur data))))
     chimes))
 
-(defstate scheduler 
-  :start (start-chimes )
-  :stop (async/close! scheduler))
+(defn start-chimes [tasks]
+  (println "Starting chimes" tasks)
+  {:chimes
+   (doall
+    (for [{:keys [interval extract-fn send-alert-fn] :as task} tasks]
+      (periodic-check interval extract-fn send-alert-fn)))})
+
+(defn stop-chimes [scheduler]
+  (println "Stopping chimes")
+  (doseq [chime (:chimes scheduler)]
+    (async/close! chime)))
+
+(defstate scheduler
+  :start (start-chimes tasks/tasks)
+  :stop (stop-chimes scheduler))
 
 
 ;; (defn gotcourtsjob [scheduler] 
@@ -26,7 +47,6 @@
 ;;           data    (extract-data data)]      
 ;;       (let [courts (:courts data)]
 ;;         (println (filter-free courts 54000 57600))))))
-
 
 ;; (defn start-job [scheduler job-definition]
 ;;   ""

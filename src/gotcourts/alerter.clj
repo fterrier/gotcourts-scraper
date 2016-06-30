@@ -20,12 +20,19 @@
          (alerts-from-diff courts-before-map courts-after-map id))
        courts))
 
-(defn get-alerts [courts-before-map courts-after-map]
+(defn- to-map [courts]
+  (->> courts 
+       (group-by :id)
+       (map (fn [[id courts]] [id (get courts 0)]))
+       (into {})))
+
+(defn get-alerts [courts-before courts-after]
   "- courts-before / courts-after
      A list of courts with {:filtered-free-slots ..}
    Returns a list of newly free slots."
-  (let [all-courts (into #{} (concat (keys courts-before-map) 
+  (let [courts-before-map (to-map courts-before)
+        courts-after-map (to-map courts-after)
+        all-courts (into #{} (concat (keys courts-before-map) 
                                      (keys courts-after-map)))]
     (concat
      (diff-free-slots courts-before-map courts-after-map all-courts))))
-

@@ -1,13 +1,12 @@
 (ns gotcourts.scraper
   (:gen-class)
-  (:require [com.stuartsierra.component :as component]
-            [org.httpkit.client :as http]
+  (:require [org.httpkit.client :as http]
             [clojure.string :as str]
             [cheshire.core :refer :all]
             [clojure.edn :as edn]))
 
 (defprotocol Scrape
-  (retrieve-raw-data [this params]))
+  (retrieve-raw-data [this params] "Returns a promise that delivers when the data is scraped"))
 
 (defn- retrieve-and-transform-data [call-fn url options response-fn]
   (let [response     (call-fn url options)
@@ -49,13 +48,20 @@
                        (#(parse-string % true))
                        :response))))
 
+;; TODO error handling
 (defrecord GotCourts []
   Scrape
   (retrieve-raw-data [scraper params]
-    (let [cookie (retrieve-cookie)
-          apikey (retrieve-apikey cookie)
-          data   (retrieve-data cookie apikey params)]
-      data)))
+    (let [p (promise)]
+      (future
+        (let [cookie (retrieve-cookie)
+              apikey (retrieve-apikey cookie)
+              data   (retrieve-data cookie apikey params)]
+          (deliver p data)))
+      p)))
 
 (defn gotcourts-scraper []
   (->GotCourts))
+
+(comment
+  @(retrieve-raw-data (gotcourts-scraper) {:id "21" :date "2015-07-20"}))
