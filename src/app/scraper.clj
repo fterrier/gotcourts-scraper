@@ -1,7 +1,9 @@
 (ns app.scraper
   (:require [gotcourts.scraper :as scraper]
-            [mount.core :refer [defstate]]))
+            [mount.core :refer [defstate]]
+            [clojure.tools.logging :as log]))
 
 (defstate scraper :start 
   (let [scraper (scraper/gotcourts-scraper)]
-    (fn [params] (scraper/retrieve-raw-data scraper params))))
+    (fn [params] 
+      (scraper/retrieve-raw-data scraper params))))

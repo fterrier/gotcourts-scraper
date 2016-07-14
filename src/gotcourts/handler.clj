@@ -7,8 +7,8 @@
              [json :refer [wrap-json-response]]
              [params :refer [wrap-params]]]))
 
-(defn free-slots [retrieve-data-fn id date transform-fn]
-  (let [data (retrieve-data-fn {:id id :date date})]
+(defn- free-slots [retrieve-data-fn id date transform-fn]
+  (let [data @(retrieve-data-fn {:id id :date date})]
     (if (:error data) 
       {:status 400
        :headers {"Content-Type" "application/json; charset=utf-8"}
@@ -16,11 +16,7 @@
       {:headers {"Content-Type" "application/json; charset=utf-8"}
        :body (transform-fn (chk/extract-data data))})))
 
-(defn not-found [_] 
-  {:status 404
-   :body   {:message "not found"}})
-
-(defn app-routes [retrieve-data-fn]
+(defn- app-routes [retrieve-data-fn]
   (routes
     ; format is yyyy-mm-dd
     (context "/gotcourts/:id{[0-9]+}/:date{[0-9]{4}-[0-9]{2}-[0-9]{2}}" [id date]
@@ -33,8 +29,9 @@
                                 (let [courts (:courts data)]
                                   (chk/filter-free courts 
                                                    (read-string (:start params)) 
-                                                   (read-string (:end params))))))))
-    (route/not-found not-found)))
+                                                   (read-string (:end params))))))))))
 
 (defn app [retrieve-data-fn]
+  "Takes as a parameter a function that returns a future that delivers when the
+   data is there"
   (wrap-json-response (wrap-params (app-routes retrieve-data-fn))))

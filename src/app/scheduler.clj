@@ -5,7 +5,8 @@
              [core :as t]
              [periodic :refer [periodic-seq]]]
             [clojure.core.async :as async :refer [<! go go-loop]]
-            [mount.core :refer [defstate]]))
+            [mount.core :refer [defstate]]
+            [clojure.tools.logging :as log]))
 
 (defn- call-and-alert [date old-data extract-fn send-alert-fn]
   (try 
@@ -13,26 +14,27 @@
       (send-alert-fn old-data data)
       data)
     (catch Exception e 
-      (println "Exception trying to execute task" e))))
+      (log/error "Exception trying to execute task" e))))
 
 (defn- periodic-check [interval extract-fn send-alert-fn]
+  (log/info "Starting periodic check with interval" interval)
   (let [chimes (chime-ch (rest (periodic-seq (t/now) interval)))]
     (go-loop [data nil]
       (when-let [msg (<! chimes)]
-        (println "Chiming at:" msg)
+        (log/info "Chiming at:" msg)
         (let [data (call-and-alert msg data extract-fn send-alert-fn)]
           (recur data))))
     chimes))
 
 (defn start-chimes [tasks]
-  (println "Starting chimes" tasks)
+  (log/info "Starting chimes" tasks)
   {:chimes
    (doall
     (for [{:keys [interval extract-fn send-alert-fn] :as task} tasks]
       (periodic-check interval extract-fn send-alert-fn)))})
 
 (defn stop-chimes [scheduler]
-  (println "Stopping chimes")
+  (log/info "Stopping chimes")
   (doseq [chime (:chimes scheduler)]
     (async/close! chime)))
 

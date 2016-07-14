@@ -1,17 +1,21 @@
 (ns gotcourts.scraper
-  (:gen-class)
-  (:require [org.httpkit.client :as http]
-            [clojure.string :as str]
+  (:require [cats.monad.maybe :as maybe]
+            [cats.core :as m]
             [cheshire.core :refer :all]
-            [clojure.edn :as edn]))
+            [clojure.string :as str]
+            [org.httpkit.client :as http]
+            [clojure.tools.logging :as log]))
 
 (defprotocol Scrape
   (retrieve-raw-data [this params] "Returns a promise that delivers when the data is scraped"))
 
 (defn- retrieve-and-transform-data [call-fn url options response-fn]
-  (let [response     (call-fn url options)
-        return-value (response-fn @response)]
-    return-value))
+  (log/debug "Calling gotcourts" url options)
+  (let [response @(call-fn url options)]
+    (log/debug "Got response" (:status response) (:error response))
+    (if (or (:error response) (not= 200 (:status response)))
+      (maybe/nothing)
+      (maybe/just (response-fn response)))))
 
 (defn- retrieve-cookie []
   (retrieve-and-transform-data 
@@ -23,41 +27,40 @@
           (first (str/split set-cookie #";"))))))
   
 (defn- retrieve-apikey [cookie]
-                 (retrieve-and-transform-data 
-
-                  http/post "https://www.gotcourts.com/de/api2/public/login/web"
-                  {:headers     {"Cookie" cookie}
-                   :form-params {:username "test@test123.com" 
-                                 :password "vivegotcourts"}}
-                  (fn [response]
-                    (->> response 
-                         :body
-                         (#(parse-string % true))
-                         :response 
-                         :apiKey))))
+  (retrieve-and-transform-data 
+   http/post "https://www.gotcourts.com/de/api2/public/login/web"
+   {:headers     {"Cookie" cookie}
+    :form-params {:username "test@test123.com" 
+                  :password "vivegotcourts"}}
+   (fn [response]
+     (->> response 
+          :body
+          (#(parse-string % true))
+          :response 
+          :apiKey))))
   
 (defn- retrieve-data [cookie apikey {:keys [id date]}]
-               (retrieve-and-transform-data 
-                http/get 
-                (str "https://www.gotcourts.com/de/api/secured/player/club/reservations/" id "?date=" date)
-                {:headers {"Cookie"      cookie 
-                           "X-GOTCOURTS" (str "ApiKey=\"" apikey "\"")}}
-                (fn [response]
-                  (->> response
-                       :body
-                       (#(parse-string % true))
-                       :response))))
+  (retrieve-and-transform-data 
+   http/get 
+   (str "https://www.gotcourts.com/de/api/secured/player/club/reservations/" id "?date=" date)
+   {:headers {"Cookie"      cookie 
+              "X-GOTCOURTS" (str "ApiKey=\"" apikey "\"")}}
+   (fn [response]
+     (->> response
+          :body
+          (#(parse-string % true))
+          :response))))
 
-;; TODO error handling
 (defrecord GotCourts []
   Scrape
   (retrieve-raw-data [scraper params]
     (let [p (promise)]
       (future
-        (let [cookie (retrieve-cookie)
-              apikey (retrieve-apikey cookie)
-              data   (retrieve-data cookie apikey params)]
-          (deliver p data)))
+        (deliver p
+                 @(m/mlet [cookie (retrieve-cookie)
+                           apikey (retrieve-apikey cookie)
+                           data   (retrieve-data cookie apikey params)]
+                          (m/return data))))
       p)))
 
 (defn gotcourts-scraper []
@@ -65,3 +68,4 @@
 
 (comment
   @(retrieve-raw-data (gotcourts-scraper) {:id "21" :date "2015-07-20"}))
+

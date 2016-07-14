@@ -10,6 +10,7 @@
        (into [])))
 
 (defn filter-free [courts starttime endtime]
+  "Returns a list of courts: [{:id ... :free-slots ... :filtered-free-slots}]"
   (->> courts
        (map #(assoc % :filtered-free-slots 
                     (filter-free-slots (:free-slots %) starttime endtime)))
@@ -52,5 +53,11 @@
           (vals (merge-with (fn [court free-slots] (assoc court :free-slots free-slots)) court-by-id free-slots)))))
 
 (defn extract-data [data]
-  (assoc (select-keys (:club data) [:name :city :country :canonical-name :web :phone]) 
-    :courts (free-slots-by-court (:reservations data) (courts-with-times (:courts (:club data))))))
+  "Taken the output of the API, returns a map with 
+   {:id ... :courts [{:id ... :free-slots ...}]}"
+  (assoc (select-keys (:club data) 
+                      [:name :city :country :canonical-name :web :phone]) 
+         :courts (free-slots-by-court (:reservations data) (courts-with-times (:courts (:club data))))))
+
+(comment
+  (extract-data (clojure.edn/read-string (slurp "fixtures/hardhof.edn"))))

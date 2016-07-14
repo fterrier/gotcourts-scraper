@@ -28,7 +28,7 @@
 
 (defn get-alerts [courts-before courts-after]
   "- courts-before / courts-after
-     A list of courts with {:filtered-free-slots ..}
+     A list of courts: [{:filtered-free-slots ...}]
    Returns a list of newly free slots."
   (let [courts-before-map (to-map courts-before)
         courts-after-map (to-map courts-after)

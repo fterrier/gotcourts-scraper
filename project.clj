@@ -13,7 +13,9 @@
                  [ring/ring-jetty-adapter "1.5.0"]
                  [ring/ring-json "0.4.0"]
                  [mount "0.1.10"]
-                 [jarohen/chime "0.1.9"]]
+                 [jarohen/chime "0.1.9"]
+                 [org.clojure/tools.logging "0.3.1"]
+                 [funcool/cats "1.2.1"]]
   ; :main ^:skip-aot gotcourts.core
   :uberjar-name "gotcourts.jar"
   :target-path "target/%s"
