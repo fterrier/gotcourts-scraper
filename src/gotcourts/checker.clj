@@ -23,16 +23,16 @@
 (defn- get-free-slots [busy-slots opening closing]
   (let [sorted-busy-slots    (sort-by :startTime busy-slots)
         uncleaned-free-slots (reduce 
-                               (fn [[first-free & rest-free :as free-slots] 
-                                    {:keys [startTime endTime] :as reservation}]
+                              (fn [[first-free & rest-free :as free-slots] 
+                                   {:keys [startTime endTime] :as reservation}]
                                  ; we begin a free time slot at the end of the period
-                                 (cons {:startTime endTime :endTime endTime} 
-                                       (if (> startTime (:endTime first-free))
-                                         ; we extend the preceding free time slot
-                                         (cons (assoc first-free :endTime startTime) rest-free)
-                                         ; otherwise it's not extended
-                                         free-slots)))
-                               [{:startTime opening :endTime opening}] sorted-busy-slots)
+                                (cons {:startTime endTime :endTime endTime} 
+                                      (if (> startTime (:endTime first-free))
+                                        ; we extend the preceding free time slot
+                                        (cons (assoc first-free :endTime startTime) rest-free)
+                                        ; otherwise it's not extended
+                                        free-slots)))
+                              [{:startTime opening :endTime opening}] sorted-busy-slots)
         bounded-free-slots   (cons (assoc (first uncleaned-free-slots) :endTime closing) 
                                    (rest uncleaned-free-slots))
         free-slots           (remove #(= (:startTime %) (:endTime %)) bounded-free-slots)]

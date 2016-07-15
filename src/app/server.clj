@@ -1,10 +1,12 @@
 (ns app.server
-  (:require [app.scraper :refer [scraper]]
-            [clojure.core.async :refer [>!!]]
+  (:require [app
+             [scheduler :as scheduler]
+             [scraper :refer [scraper]]]
             [compojure
              [core :refer [routes]]
              [route :as route]]
             [gotcourts.handler :as gotcourts-handler]
+            [gotcourts.bot :as bot]
             [mount.core :refer [defstate]]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.defaults :refer [api-defaults wrap-defaults]]
@@ -17,10 +19,10 @@
 (defn start-www [{:keys [port]} scraper]
   (-> (routes 
        (gotcourts-handler/app scraper)
-       ;; TODO fix this
-       (telegram-handler/app "244753532:AAEm7RIud0nszMYOWepyE5lJpQwVt8bm1D8" 
-                             "73ed7de4.ngrok.io"
-                             (fn [_ ch] (>!! ch "test")))
+       (telegram-handler/app 
+        ;; TODO use a configuration
+        "244753532:AAEm7RIud0nszMYOWepyE5lJpQwVt8bm1D8" "73ed7de4.ngrok.io"
+        (bot/create-bot scheduler/scheduler))
        (route/not-found not-found))
       (wrap-defaults api-defaults)
       (run-jetty {:join? false
