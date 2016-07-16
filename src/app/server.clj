@@ -21,7 +21,7 @@
        (gotcourts-handler/app scraper)
        (telegram-handler/app 
         ;; TODO use a configuration
-        "244753532:AAEm7RIud0nszMYOWepyE5lJpQwVt8bm1D8" "73ed7de4.ngrok.io"
+        "244753532:AAEm7RIud0nszMYOWepyE5lJpQwVt8bm1D8" "10d35f42.ngrok.io"
         (bot/create-bot scheduler/scheduler))
        (route/not-found not-found))
       (wrap-defaults api-defaults)

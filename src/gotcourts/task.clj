@@ -38,7 +38,7 @@
     (println alert-data)
     (notifier alert-data)))
 
-(defn create-gotcourts-task [scraper notifier ids interval start-time end-time]
+(defn create-gotcourts-task [scraper notifier ids date interval start-time end-time]
   {:interval interval
-   :extract-fn (fn [_] (extract-gotcourts scraper ids (t/now) start-time end-time))
+   :extract-fn (fn [_] (extract-gotcourts scraper ids date start-time end-time))
    :send-alert-fn (fn [old-data data] (handle-alerts notifier old-data data))})
