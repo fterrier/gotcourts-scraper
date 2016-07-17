@@ -14,7 +14,7 @@
 
 (defn- periodic-check [interval task-fn]
   (log/info "Starting periodic check with interval" interval)
-  (let [chimes (chime-ch (rest (periodic-seq (t/now) interval)))]
+  (let [chimes (chime-ch (periodic-seq (t/now) interval))]
     (go-loop [old-data nil]
       (when-let [date (<! chimes)]
         (log/info "Chiming at:" date)

@@ -18,7 +18,7 @@
              :date 1468642768, 
              :text text}})
 
-(deftest parse-message-test
+(deftest parse-message-add-test
   (testing "Message user parses correctly"
     (let [{:keys [user]} (bot-parser/parse-message (telegram-message ""))]
       (is (= user {:id 86757011
@@ -28,13 +28,13 @@
   
   (testing "Message with garbage produces error"
     (let [{:keys [error]} (bot-parser/parse-message (telegram-message "garbage"))]
-      (is (= :not-found (:error error)))))
+      (is (= :command-not-found (:error error)))))
   
   (testing "Correct message is parsed properly"
     (let [{:keys [command error]} (bot-parser/parse-message 
                                    (telegram-message "/notify 15,16,17 17:00-21:00 27-11-2015"))]
       (is (nil? error))
-      (is (= {:command :notify
+      (is (= {:command :add
               :courts [15 16 17]
               :start-time 61200
               :end-time 75600
@@ -44,5 +44,17 @@
   ;(testing "Bad courts)
   ;(testing "Bad date)
   ;(testing "Too many arguments)
-  )
+)
+ 
+(deftest parse-message-show-test
+  (testing "Message /show is parsed correctly"
+    (let [{:keys [command]} 
+          (bot-parser/parse-message (telegram-message "/show"))]
+      (is (= {:command :show}))))
+  
+  (testing "Rubbish after /show is ok"
+    (let [{:keys [command]} 
+          (bot-parser/parse-message (telegram-message "/show rubbish"))]
+      (is (= {:command :show})))))
+  
 

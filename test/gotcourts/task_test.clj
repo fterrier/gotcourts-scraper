@@ -31,21 +31,17 @@
 
 (deftest handle-alerts-test
   (testing "Test alerts on same data produces empty alert data"
-    (let [alert-atom (atom {})
-          notifier   (mock-notifier alert-atom)
-          data       (task/extract-gotcourts 
+    (let [data       (task/extract-gotcourts 
                       (mock-scraper {17 "fixtures/hardhof.edn"})
                       [17] (t/now) 50400 64800)
-          alerts     (task/handle-alerts notifier data data)]
-      (is (= nil (get-in @alert-atom [17 :alerts])))))
+          alerts     (task/handle-alerts data data)]
+      (is (= nil (get-in alerts [17 :alerts])))))
   
   (testing "Test alerts on new data"
-    (let [alert-atom (atom {})
-          notifier   (mock-notifier alert-atom)
-          data       (task/extract-gotcourts 
+    (let [data       (task/extract-gotcourts 
                       (mock-scraper {17 "fixtures/hardhof.edn"})
                       [17] (t/now) 50400 64800)
-          alerts     (task/handle-alerts notifier nil data)]
+          alerts     (task/handle-alerts nil data)]
       (is (= [[:new-slot {:slot {:startTime 50400, :endTime 64800}, :id 86}]
               [:new-slot {:slot {:startTime 50400, :endTime 64800}, :id 88}]] 
-             (get-in @alert-atom [17 :alerts]))))))
+             (get-in alerts [17 :alerts]))))))

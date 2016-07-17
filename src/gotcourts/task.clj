@@ -27,7 +27,7 @@
   {:alerts (alr/get-alerts (get-in old-data [id :courts]) (get-in data [id :courts]))
    :data   (get data id)})
 
-(defn handle-alerts [notifier old-data data]
+(defn handle-alerts [old-data data]
   "Generates a alert diff from an old map of tennis clubs to a new one and sends
    a notification in case there is a new alert."
   (let [ids        (into #{} (concat (keys old-data) (keys data)))
@@ -35,10 +35,9 @@
                         (map (fn [id] [id (get-alert-data id old-data data)]))
                         (remove (fn [[id alert-data]] (empty? (:alerts alert-data))))
                         (into {}))]
-    (println alert-data)
-    (notifier alert-data)))
+    alert-data))
 
-(defn create-gotcourts-task [scraper notifier ids date interval start-time end-time]
-  {:interval interval
-   :extract-fn (fn [_] (extract-gotcourts scraper ids date start-time end-time))
-   :send-alert-fn (fn [old-data data] (handle-alerts notifier old-data data))})
+(defn create-gotcourts-task-creator [scraper]
+  (fn [{:keys [courts date start-time end-time] :as options}]
+    {:extract-fn (fn [_] (extract-gotcourts scraper courts date start-time end-time))
+     :alert-fn (fn [old-data data] (handle-alerts old-data data))}))

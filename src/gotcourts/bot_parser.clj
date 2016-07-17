@@ -36,31 +36,35 @@
 (defmethod parse-command-chunks "/notify" [command args]
   "/free <courts> <hours> <time span in natural language>"
   (if (not= 3 (count args))
-    [nil {:error :format-error :text "Not enough args"}]
+    [nil {:error :format-error :type :args}]
     (let [courts                (parse-courts (first args))
           [start-time end-time] (parse-hours (second args))
           date                  (f/parse day-month-year-formatter (last args))]
       (cond
         (empty? courts) 
-        [nil {:error :format-error :text "Did not get courts, use format ..."}]
+        [nil {:error :format-error :type :courts}]
         (or (nil? start-time) (nil? end-time))
-        [nil {:error :format-error :text "Did not get time, use format ..."}]
+        [nil {:error :format-error :type :time}]
         (nil? date)
-        [nil {:error :format-error :text "Did not get date, use format ..."}]
+        [nil {:error :format-error :type :date}]
         :else
-        [{:command :notify
+        [{:command :add
           :start-time start-time
           :end-time end-time
           :date date
           :courts courts}]))))
 
+(defmethod parse-command-chunks "/show" [command args]
+  [{:command :show}])
+
 (defmethod parse-command-chunks :default [command args]
-  [nil {:error :not-found :text "Didn't quite get that ..."}])
+  [nil {:error :command-not-found}])
 
 (defn- parse-command [text]
   (let [[command & args] (str/split (str/trim text) #" ")]
     (parse-command-chunks command args)))
 
+;; TODO handle edited-message
 (defn parse-message [{:keys [message] :as data}]
   "Takes a telegram message and parses it to {:user ... :command ... :error ...}"
   (let [user            (:from message)

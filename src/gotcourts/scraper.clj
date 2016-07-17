@@ -54,6 +54,7 @@
 (defrecord GotCourts []
   Scrape
   (retrieve-raw-data [scraper params]
+    (log/info "Scraping gotcourts with params" params)
     (let [p (promise)]
       (future
         (deliver p

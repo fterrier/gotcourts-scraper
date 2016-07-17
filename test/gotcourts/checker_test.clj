@@ -35,10 +35,20 @@
                :filtered-free-slots [slot1]}]
              (chk/filter-free [{:free-slots [slot1]}] 50400 55000))))
     
-    (testing "Free slot with beginning after time is filtered"
-      (is (= []
+    (testing "Free slot with beginning after time is free"
+      (is (= [{:free-slots [slot1]
+               :filtered-free-slots [slot1]}]
              (chk/filter-free [{:free-slots [slot1]}] 50000 55000))))
 
-    (testing "Free slot with ending before time is filtered"
+    (testing "Free slot with ending before time is free"
+      (is (= [{:free-slots [slot1]
+               :filtered-free-slots [slot1]}]
+             (chk/filter-free [{:free-slots [slot1]}] 60000 65000))))
+
+    (testing "Free slot with ending at beginning is filtered"
       (is (= []
-             (chk/filter-free [{:free-slots [slot1]}] 50400 65000))))))
+             (chk/filter-free [{:free-slots [slot1]}] 50000 50400))))
+
+    (testing "Free slot with beginning at end is filtered"
+      (is (= []
+             (chk/filter-free [{:free-slots [slot1]}] 64800 65000))))))
