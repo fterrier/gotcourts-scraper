@@ -21,7 +21,7 @@
     (let [scheduler (scheduler/init-scheduler)
           interval  (t/millis 100)
           test-atom (atom 0)
-          task-fn   (fn [_ _] 
+          task-fn   (fn [_ _]
                       (swap! test-atom inc)
                       (throw (Exception.)))
           stop-fn   (scheduler/add-chime scheduler interval task-fn)]
