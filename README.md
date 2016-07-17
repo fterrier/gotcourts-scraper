@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fterrier/gotcourts-scraper.svg?branch=master)](https://travis-ci.org/fterrier/gotcourts-scraper)
+
 # gotcourts
 
 FIXME: description
