@@ -18,8 +18,8 @@
 
 (defn- start-client-loop [client-ch bot-id chat-id]
   (go-loop []
-    (when-let [message (<! client-ch)]
-      @(client/send-message bot-id chat-id message)
+    (when-let [{:keys [message options]} (<! client-ch)]
+      @(client/send-message bot-id chat-id message options)
       (recur))))
 
 (defn- client-channel* [chat-id client-atom bot-id]
@@ -55,3 +55,5 @@
       (when webhook-domain (register-webhook webhook-domain bot-id))
       (start-handler-loop message-ch handler))
     (app-routes msg-handler)))
+
+;; TODO function to stop this

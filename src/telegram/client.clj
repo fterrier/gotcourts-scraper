@@ -1,5 +1,6 @@
 (ns telegram.client
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.set :refer [rename-keys]]
+            [clojure.tools.logging :as log]
             [org.httpkit.client :as http]))
 
 ;; START TELEGRAM CLIENT
@@ -12,8 +13,14 @@
                   (log/error "Telegram - Failed, exception is " error)
                   (log/info "Telegram - Async HTTP GET: " status body))))))
 
-(defn send-message [bot-id chat-id text]
-  (send-telegram bot-id "sendMessage" {:query-params {:chat_id chat-id :text text}}))
+(defn send-message 
+  ([bot-id chat-id text options]
+   "Options can be :
+    - parse-mode: :markdown or nil"
+   (let [telegram-options (rename-keys options {:parse-mode :parse_mode})]
+     (send-telegram bot-id "sendMessage" {:query-params (merge {:chat_id chat-id :text text} telegram-options)})))
+  ([bot-id chat-id text]
+   (send-message bot-id chat-id text {})))
 
 (defn get-me [bot-id]
   (send-telegram bot-id "getMe" nil))
