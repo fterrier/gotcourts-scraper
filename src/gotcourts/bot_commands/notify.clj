@@ -4,7 +4,14 @@
              [format :as f]]
             [clojure.string :as str]))
 
+;; TODO maybe split parsing from command
+
 (def day-month-year-formatter (f/formatter "dd-MM-yyyy"))
+
+(defn- get-message [{:keys [error success type]}]
+  (cond 
+    (= error :format-error) {:message "prout"}
+    (= success :task-added) {:message "yeee"}))
 
 (defn- number-of-seconds [unparsed-time]
   (try
@@ -98,7 +105,8 @@
                                                               notify-fn 
                                                               command)]
           (swap! tasks-db assoc user new-tasks)
-          (send-to-user-fn response)))))
+          (send-to-user-fn 
+           (assoc response :text (get-message response)))))))
 
 (defn create-notify-command [schedule-fn create-task-fn tasks-db]
   (partial handle-message* schedule-fn create-task-fn tasks-db))

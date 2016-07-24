@@ -6,10 +6,10 @@
              [scraper :as scraper]
              [task :as task]]
             [gotcourts.bot-commands
-             [bot-messages :as bot-messages]
              [notify :as notify-command]
              [show :as show-command]]
             [mount.core :refer [defstate]]
+            [ring.util.response :refer [response]]
             [scheduler.scheduler :as task-scheduler]))
 
 (defn- create-scraper []
@@ -27,8 +27,16 @@
         create-task-fn (task/create-gotcourts-task-creator (create-scraper))]
     (notify-command/create-notify-command schedule-fn create-task-fn tasks-db)))
 
-(defn- send-to-user [ch response command]
-  (>!! ch (bot-messages/unparse response command)))
+(defn- get-message [{:keys [error success] :as response}]
+  (cond
+    (= :command-not-found error) {:message "Sorry, did not understand this. Use /help to get help."}
+    :else {:message (str response)}))
+
+(defn- send-to-user [ch {:keys [text] :as response} command]
+  (>!! ch 
+       (if (nil? text)
+         (get-message response)
+         text)))
 
 (defn- start-bot []
   (let [tasks-db   (atom {})
