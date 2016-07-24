@@ -11,11 +11,11 @@
           test-atom (atom 0)
           task-fn   (fn [_ _] (swap! test-atom inc))
           stop-fn   (scheduler/add-chime scheduler interval task-fn)]
-      (<!! (timeout 150))
-      (is (= @test-atom 1))
+      (<!! (timeout 250))
+      (is (= @test-atom 2))
       (stop-fn)
       (<!! (timeout 150))
-      (is (= @test-atom 1))))
+      (is (= @test-atom 2))))
   
   (testing "Adding a chime with faulty function does not crash the task"
     (let [scheduler (scheduler/init-scheduler)
@@ -25,13 +25,13 @@
                       (swap! test-atom inc)
                       (throw (Exception.)))
           stop-fn   (scheduler/add-chime scheduler interval task-fn)]
+      (<!! (timeout 260))
+      (is (= @test-atom 2))
       (<!! (timeout 160))
-      (is (= @test-atom 1))
-      (<!! (timeout 160))
-      (is (> @test-atom 1))
+      (is (> @test-atom 2))
       (stop-fn)
       (<!! (timeout 150))
-      (is (= @test-atom 3))))
+      (is (= @test-atom 4))))
 
   (testing "Stop all chimes stops all"
     (let [scheduler (scheduler/init-scheduler)
@@ -39,9 +39,9 @@
           test-atom (atom 0)
           task-fn   (fn [_ _] (swap! test-atom inc))
           stop-fn   (scheduler/add-chime scheduler interval task-fn)]
-      (<!! (timeout 150))
-      (is (= @test-atom 1))
+      (<!! (timeout 250))
+      (is (= @test-atom 2))
       (scheduler/stop-chimes scheduler)
       (<!! (timeout 150))
-      (is (= @test-atom 1))
+      (is (= @test-atom 2))
       (stop-fn))))

@@ -19,7 +19,7 @@
        (gotcourts-handler/app scraper/scraper)
        (telegram-handler/app 
         ;; TODO use a configuration
-        "244753532:AAEm7RIud0nszMYOWepyE5lJpQwVt8bm1D8" "ec4dd2c0.ngrok.io" bot/bot)
+        "244753532:AAEm7RIud0nszMYOWepyE5lJpQwVt8bm1D8" "403429f6.ngrok.io" bot/bot)
        (route/not-found not-found))
       (wrap-defaults api-defaults)
       (run-jetty {:join? false

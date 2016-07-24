@@ -1,8 +1,10 @@
 (ns gotcourts.bot-commands.show)
 
-(defn- get-message [{:keys [success] :as message}]
+
+
+(defn- get-message [{:keys [success options] :as message}]
   (case success
-    :show {:message ""}
+    :show {:message (str options)}
     :show-no-tasks {:message "At the moment you have no tasks. Use /notify to add a task."}))
 
 (defn- render-tasks [user-tasks]

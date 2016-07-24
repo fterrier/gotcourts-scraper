@@ -34,14 +34,15 @@
     (let [data       (task/extract-gotcourts 
                       (mock-scraper {17 "fixtures/hardhof.edn"})
                       [17] (t/now) 50400 64800)
-          alerts     (task/handle-alerts data data)]
+          alerts     (task/get-alerts data data)]
       (is (= nil (get-in alerts [17 :alerts])))))
   
   (testing "Test alerts on new data"
     (let [data       (task/extract-gotcourts 
                       (mock-scraper {17 "fixtures/hardhof.edn"})
                       [17] (t/now) 50400 64800)
-          alerts     (task/handle-alerts nil data)]
+          alerts     (task/get-alerts nil data)]
+      (println data)
       (is (= [[:new-slot {:slot {:startTime 50400, :endTime 64800}, :id 86}]
               [:new-slot {:slot {:startTime 50400, :endTime 64800}, :id 88}]
               [:new-slot {:slot {:startTime 43200, :endTime 61200}, :id 91}]

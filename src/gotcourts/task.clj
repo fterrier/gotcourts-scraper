@@ -4,7 +4,8 @@
              [format :as f]]
             [gotcourts
              [alerter :as alr]
-             [checker :as chk]]))
+             [checker :as chk]]
+            [clojure.tools.logging :as log]))
 
 (def custom-formatter (f/formatter "YYYY-MM-dd"))
 
@@ -17,6 +18,7 @@
 (defn extract-gotcourts [scraper ids date start-time end-time]
   "A map of tennis clubs, containing courts:
   {id {:name ... :courts [{:free-slots ... :filtered-free-slots ...}]}}"
+  (log/info "Extracting from gotcourts" ids date)
   (->> ids
        (pmap (fn [id] [id (scrape-data scraper id
                                        (f/unparse custom-formatter date)
@@ -25,11 +27,13 @@
 
 (defn- get-alert-data [id old-data data]
   {:alerts (alr/get-alerts (get-in old-data [id :courts]) (get-in data [id :courts]))
-   :data   (get data id)})
+   :venue  (get data id)})
 
-(defn handle-alerts [old-data data]
-  "Generates a alert diff from an old map of tennis clubs to a new one and sends
-   a notification in case there is a new alert."
+(defn get-alerts [old-data data]
+  "Takes as an input 2 maps of 
+   {<venue-id> {:name ... :courts [{:filtered-free-slots} ...]}] 
+   and returns a map of 
+   {<venue-id> {:alerts [...]} :venue {:name ... :courts ...}}"
   (let [ids        (into #{} (concat (keys old-data) (keys data)))
         alert-data (->> ids 
                         (map (fn [id] [id (get-alert-data id old-data data)]))
@@ -38,6 +42,6 @@
     alert-data))
 
 (defn create-gotcourts-task-creator [scraper]
-  (fn [{:keys [courts date start-time end-time] :as options}]
-    {:extract-fn (fn [_] (extract-gotcourts scraper courts date start-time end-time))
-     :alert-fn (fn [old-data data] (handle-alerts old-data data))}))
+  (fn [{:keys [venues date start-time end-time] :as options}]
+    {:extract-fn (fn [_] (extract-gotcourts scraper venues date start-time end-time))
+     :alert-fn (fn [old-data data] (get-alerts old-data data))}))

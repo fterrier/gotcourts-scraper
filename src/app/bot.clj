@@ -29,7 +29,8 @@
 
 (defn- get-message [{:keys [error success] :as response}]
   (cond
-    (= :command-not-found error) {:message "Sorry, did not understand this. Use /help to get help."}
+    (= :command-not-found error) 
+    {:message "Sorry, did not understand this. Use /help to get help."}
     :else {:message (str response)}))
 
 (defn- send-to-user [ch {:keys [text] :as response} command]
