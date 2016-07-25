@@ -32,7 +32,7 @@
   (let [{:keys [extract-fn alert-fn]} (create-task-fn command)]
     [{:success :task-added} 
      [{:task-id (dissoc command :command)
-       :interval (t/minutes 2)
+       :interval (t/minutes 5)
        :task-fn (extract-and-alert-task-fn (:date command) 
                                            notify-fn extract-fn alert-fn)}]]))
 
