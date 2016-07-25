@@ -1,21 +1,16 @@
 (ns app.bot
-  (:require [app.scheduler :as scheduler]
+  (:require [app
+             [scheduler :as scheduler]
+             [scraper :as scraper]]
             [bot.bot :as bot]
             [clojure.core.async :refer [>!!]]
-            [gotcourts
-             [scraper :as scraper]
-             [task :as task]]
             [gotcourts.bot-commands
              [notify :as notify-command]
              [show :as show-command]]
+            [gotcourts.task :as task]
             [mount.core :refer [defstate]]
             [ring.util.response :refer [response]]
             [scheduler.scheduler :as task-scheduler]))
-
-(defn- create-scraper []
-  (let [scraper (scraper/gotcourts-scraper)]
-    (fn [params] 
-      (scraper/retrieve-raw-data scraper params))))
 
 (defn- create-show-command [tasks-db]
   (show-command/create-show-command tasks-db))
@@ -24,7 +19,7 @@
   (let [schedule-fn    (fn [interval task-fn] 
                          (task-scheduler/add-chime scheduler/scheduler 
                                                    interval task-fn))
-        create-task-fn (task/create-gotcourts-task-creator (create-scraper))]
+        create-task-fn (task/create-gotcourts-task-creator scraper/scraper)]
     (notify-command/create-notify-command schedule-fn create-task-fn tasks-db)))
 
 (defn- get-message [{:keys [error success] :as response}]

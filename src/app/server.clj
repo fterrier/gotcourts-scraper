@@ -1,6 +1,7 @@
 (ns app.server
-  (:require [app.scraper :as scraper]
-            [app.bot :as bot]
+  (:require [app
+             [bot :as bot]
+             [scraper :as scraper]]
             [compojure
              [core :refer [routes]]
              [route :as route]]

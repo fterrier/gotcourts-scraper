@@ -7,7 +7,8 @@
             [clojure.tools.logging :as log]))
 
 (defprotocol Scrape
-  (retrieve-raw-data [this params] "Returns a promise that delivers when the data is scraped"))
+  (fetch-availabilities [this params] "Returns a promise that delivers when the data is scraped")
+  (fetch-venues [this params] "Returns a promise that delivers when the data is scraped"))
 
 (defn- retrieve-and-transform-data [call-fn url options response-fn]
   (log/debug "Calling gotcourts" url options)
@@ -39,7 +40,7 @@
           :response 
           :apiKey))))
   
-(defn- retrieve-data [cookie apikey {:keys [id date]}]
+(defn- retrieve-availabilities [cookie apikey {:keys [id date]}]
   (retrieve-and-transform-data 
    http/get 
    (str "https://www.gotcourts.com/de/api/secured/player/club/reservations/" id "?date=" date)
@@ -51,22 +52,40 @@
           (#(parse-string % true))
           :response))))
 
+(defn- retrieve-venues [cookie apikey {:keys [search]}]
+  (retrieve-and-transform-data 
+   http/get 
+   (str "https://www.gotcourts.com/de/api/secured/player/club/search/term?term=" search)
+   {:headers {"Cookie"      cookie 
+              "X-GOTCOURTS" (str "ApiKey=\"" apikey "\"")}}
+   (fn [response]
+     (->> response
+          :body
+          (#(parse-string % true))
+          :response))))
+
+(defn- fetch-stuff [params fetch-fn]
+  (log/info "Scraping gotcourts with params" params)
+  (let [p (promise)]
+    (future
+      (deliver p
+               @(m/mlet [cookie (retrieve-cookie)
+                         apikey (retrieve-apikey cookie)
+                         data   (fetch-fn cookie apikey params)]
+                        (m/return data))))
+    p))
+
 (defrecord GotCourts []
   Scrape
-  (retrieve-raw-data [scraper params]
-    (log/info "Scraping gotcourts with params" params)
-    (let [p (promise)]
-      (future
-        (deliver p
-                 @(m/mlet [cookie (retrieve-cookie)
-                           apikey (retrieve-apikey cookie)
-                           data   (retrieve-data cookie apikey params)]
-                          (m/return data))))
-      p)))
+  (fetch-availabilities [scraper params]
+    (fetch-stuff params retrieve-availabilities))
+  (fetch-venues [scraper params]
+    (fetch-stuff params retrieve-venues)))
 
 (defn gotcourts-scraper []
   (->GotCourts))
 
 (comment
-  @(retrieve-raw-data (gotcourts-scraper) {:id "21" :date "2015-07-20"}))
+  @(fetch-availabilities (gotcourts-scraper) {:id "21" :date "2015-07-20"})
+  @(fetch-venues (gotcourts-scraper) {:search "asvz"}))
 
