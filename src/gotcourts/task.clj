@@ -7,7 +7,7 @@
              [checker :as chk]]
             [clojure.tools.logging :as log]))
 
-(def custom-formatter (f/formatter "YYYY-MM-dd"))
+(def custom-formatter (f/formatter "YYYY-MM-dd" (t/default-time-zone)))
 
 (defn- scrape-data [scraper id formatted-date start-time end-time]
   (let [data      @(scraper {:id id :date formatted-date})

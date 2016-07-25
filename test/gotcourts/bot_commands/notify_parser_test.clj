@@ -1,9 +1,12 @@
 (ns gotcourts.bot-commands.notify-parser-test
-  (:require [clj-time.format :as f]
+  (:require [clj-time 
+             [format :as f]
+             [predicates :as pr]]
             [clojure.test :refer [deftest is testing]]
-            [gotcourts.bot-commands.notify-parser :as bot-commands]))
+            [gotcourts.bot-commands.notify-parser :as bot-commands]
+            [clj-time.core :as t]))
 
-(def test-date (f/parse (f/formatter "dd-MM-yyyy") "27-11-2015"))
+(def test-date (f/parse (f/formatter "dd-MM-yyyy" (t/default-time-zone)) "27-11-2015"))
 
 (defn- test-result 
   ([start-time end-time]
@@ -30,33 +33,39 @@
 
   (testing "Correct message is parsed properly - hours in HH'h'mm"
     (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h00-21h30" "27-11-2015"])]
-       (is (= (test-result 61200 77400)
-              command))
-       (is (nil? error))))
+      (is (= (test-result 61200 77400)
+             command))
+      (is (nil? error))))
 
   (testing "Correct message is parsed properly - date in dd/MM/yyyy"
     (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h00-21h30" "27-11-2015"])]
-       (is (= (test-result 61200 77400)
-              command))
-       (is (nil? error))))
+      (is (= (test-result 61200 77400)
+             command))
+      (is (nil? error))))
 
   (testing "Correct message is parsed properly - date in dd/MM"
     (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h00-21h30" "27/11/2015"])]
-       (is (= (test-result 61200 77400)
-              command))
-       (is (nil? error))))
+      (is (= (test-result 61200 77400)
+             command))
+      (is (nil? error))))
 
   (testing "Correct message is parsed properly - date in dd/MM"
     (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h00-21h30" "27/11"])]
-       (is (= (test-result 61200 77400)
-              command))
-       (is (nil? error))))
+      (is (= (test-result 61200 77400)
+             command))
+      (is (nil? error))))
 
-  (testing "Correct message is parsed properly - date <tuesday>"
-    (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h00-21h30" "tuesday"])]
-       (is (= (test-result 61200 77400)
-              command))
-       (is (nil? error))))
+  (testing "Correct message is parsed properly - date <monday>"
+    (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h00-21h30" "monday"])]
+      (is (pr/monday? (:date command)))
+      (is (t/after? (:date command) (t/now)))
+      (is (nil? error))))
+
+  (testing "Correct message is parsed properly - date <on monday>"
+    (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h00-21h30" "monday"])]
+      (is (pr/monday? (:date command)))
+      (is (t/after? (:date command) (t/now)))
+      (is (nil? error))))
 
   ;(testing "Bad time")
   ;(testing "Bad courts)

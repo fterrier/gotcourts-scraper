@@ -1,5 +1,7 @@
 (ns gotcourts.task-test
-  (:require [clj-time.core :as t]
+  (:require [clj-time
+             [core :as t]
+             [format :as f]]
             [clojure
              [edn :as edn]
              [test :refer [deftest is testing]]]
@@ -12,6 +14,16 @@
 (defn mock-notifier [alert-atom]
   (fn [alert-data]
     (reset! alert-atom alert-data)))
+
+(deftest extract-data-date-test
+  (testing "Extract function uses right date"
+    (let [test-date 
+          (f/parse (f/formatter "dd-MM-yyyy" (t/default-time-zone)) "27-11-2015")]
+      (task/extract-gotcourts
+       (fn [{:keys [date]}] 
+         (is (= "2015-11-27" date))
+         (future {}))
+       [1] test-date 50000 60000))))
 
 (deftest extract-data-test
   (testing "Extract function generates filtered-court data for single court"
@@ -52,3 +64,4 @@
               [:new-slot {:slot {:startTime 50400, :endTime 61200}, :id 87}]
               [:new-slot {:slot {:startTime 50400, :endTime 61200}, :id 84}]] 
              (get-in alerts [17 :alerts]))))))
+

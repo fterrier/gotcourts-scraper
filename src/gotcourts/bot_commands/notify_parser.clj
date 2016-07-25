@@ -2,10 +2,13 @@
   (:require [clj-time
              [core :as t]
              [format :as f]]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [duckling.core :as duckling]))
 
-(def dmy-1 (f/formatter "dd-MM-yyyy"))
-(def dmy-2 (f/formatter "dd/MM/yyyy"))
+(duckling/load! {:languages ["en"]})
+
+(def dmy-1 (f/formatter "dd-MM-yyyy" (t/default-time-zone)))
+(def dmy-2 (f/formatter "dd/MM/yyyy" (t/default-time-zone)))
 
 (def hour-minute (f/formatter (t/default-time-zone) 
                               "HH'h'" "HH'h'mm" "HH:mm" "HHmm"))
@@ -40,11 +43,15 @@
     (catch Exception e)))
 
 (defn- parse-known-expressions [string]
-  ;; TODO use duckling
-  nil)
+  (let [parsed-times (duckling/parse :en$core string [:time])
+        first-time   (first (filter #(= :day (:grain (:value %))) parsed-times))]
+    (when first-time
+      (t/to-time-zone 
+       (f/parse (f/formatters :date-time) 
+                (:value (:value first-time)))
+       (t/default-time-zone)))))
 
 (defn- parse-date [string]
-  (println string)
   (let [parsed-time (parse-time [dmy-1 dmy-2] string)]
     (if parsed-time parsed-time
         (parse-known-expressions string))))
@@ -56,8 +63,8 @@
          (remove nil?))))
 
 (defn parse-command-chunks [args]
-  "/free <venues> <hours> <time span in natural language>"
-  (if (not= 3 (count args))
+  "/notify <venues> <hours> <time span in natural language>"
+  (if (< (count args) 3)
     [nil {:error :format-error :type :args}]
     (let [venues                (parse-venues (first args))
           [start-time end-time] (parse-hours (second args))

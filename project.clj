@@ -15,7 +15,8 @@
                  [mount "0.1.10"]
                  [jarohen/chime "0.1.9"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [funcool/cats "1.2.1"]]
+                 [funcool/cats "1.2.1"]
+                 [wit/duckling "0.4.8"]]
   ; :main ^:skip-aot gotcourts.core
   :uberjar-name "gotcourts.jar"
   :target-path "target/%s"

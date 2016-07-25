@@ -2,7 +2,7 @@
   (:require [clj-time.core :as t]
             [clj-time.format :as f]))
 
-(def human-date-formatter (f/formatter "EEE, dd MMM yyyy"))
+(def human-date-formatter (f/formatter "EEE, dd MMM yyyy" (t/default-time-zone)))
 
 (def format-message 
   "Use format /notify <courts> <time> <date>. For example, to get an alert when a court becomes available:
@@ -55,13 +55,16 @@
        (apply str "The following slots are not available any more:\n" 
               (map #(get-slot-text (:courts venue) %) gone-slots))))))
 
+(defn- get-task-added-message [{:keys [date start-time end-time]}]
+  "Task added successfuly. You will be notified as soon as a court becomes available.")
+
 (defn get-message [{:keys [error success type options]}]
   (cond 
     (= error :format-error) 
     {:message (get-format-error-message type) 
      :options {:parse-mode :markdown}}
     (= success :task-added) 
-    {:message "Task added successfuly. You will be notified as soon as a court becomes available."}
+    {:message (get-task-added-message options)}
     (= success :new-alert) 
     {:message (get-new-alerts-message options) 
      :options {:parse-mode :markdown}}))
