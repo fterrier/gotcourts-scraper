@@ -19,17 +19,17 @@
     :date date}))
 
 (deftest parse-message-add-test
-   (testing "Correct message is parsed properly"
-     (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17:00-21:00" "27-11-2015"])]
-       (is (= (test-result 61200 75600) 
-              command))
-       (is (nil? error))))
-
+  (testing "Correct message is parsed properly"
+    (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17:00-21:00" "27-11-2015"])]
+      (is (= (test-result 61200 75600) 
+             command))
+      (is (nil? error))))
+  
   (testing "Correct message is parsed properly - hours in HH'h'"
     (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h-21h" "27-11-2015"])]
-       (is (= (test-result 61200 75600)
-              command))
-       (is (nil? error))))
+      (is (= (test-result 61200 75600)
+             command))
+      (is (nil? error))))
 
   (testing "Correct message is parsed properly - hours in HH'h'mm"
     (let [[command error] (bot-commands/parse-command-chunks ["15,16,17" "17h00-21h30" "27-11-2015"])]

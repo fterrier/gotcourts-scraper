@@ -20,7 +20,7 @@
        (into {})))
 
 (defn fetch-gotcourts-venues [venue-fn terms]
-  "Takes as an input a list of terms and returns a list of matching venue ids."
+  "Takes as an input a list of terms and returns a list of matching venues {:id ... :name ...}."
   (log/info "Extracting venues from gotcourts" terms)
   (let [params-list  (map (fn [term] {:search term}) terms)
         fetched-data (fetch-parallel venue-fn params-list)]
@@ -45,6 +45,7 @@
   {:alerts (alr/get-alerts (get-in old-data [id :courts]) (get-in data [id :courts]))
    :venue  (get data id)})
 
+;; TODO move into alerter.clj ?
 (defn get-alerts [old-data data]
   "Takes as an input 2 maps of 
    {<venue-id> {:name ... :courts [{:filtered-free-slots} ...]}] 
@@ -57,8 +58,4 @@
                         (into {}))]
     alert-data))
 
-;; TODO move into notify ?
-(defn create-gotcourts-task-creator [availability-fn]
-  (fn [{:keys [venues date start-time end-time] :as options}]
-    {:extract-fn (fn [_] (fetch-gotcourts-availabilities availability-fn venues date start-time end-time))
-     :alert-fn (fn [old-data data] (get-alerts old-data data))}))
+

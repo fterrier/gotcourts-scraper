@@ -5,8 +5,6 @@
             [clojure.string :as str]
             [duckling.core :as duckling]))
 
-(duckling/load! {:languages ["en"]})
-
 (def dmy-1 (f/formatter "dd-MM-yyyy" (t/default-time-zone)))
 (def dmy-2 (f/formatter "dd/MM/yyyy" (t/default-time-zone)))
 
@@ -62,8 +60,11 @@
          (map parse-int)
          (remove nil?))))
 
+(def init-parser! (memoize (fn [] (duckling/load! {:languages ["en"]}))))
+
 (defn parse-command-chunks [args]
   "/notify <venues> <hours> <time span in natural language>"
+  (init-parser!)
   (if (< (count args) 3)
     [nil {:error :format-error :type :args}]
     (let [venues                (parse-venues (first args))
@@ -82,3 +83,4 @@
           :end-time end-time
           :date date
           :venues venues}]))))
+

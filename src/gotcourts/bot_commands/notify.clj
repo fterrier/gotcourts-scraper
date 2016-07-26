@@ -1,9 +1,11 @@
 (ns gotcourts.bot-commands.notify
   (:require [clj-time.core :as t]
             [clojure.tools.logging :as log]
+            [gotcourts.task :as task]
+            [gotcourts.scraper :as scraper]
             [gotcourts.bot-commands
-             [notify-parser :as notify-parser]
-             [notify-message :as notify-message]]))
+             [notify-message :as notify-message]
+             [notify-parser :as notify-parser]]))
 
 (defn- start-tasks [schedule-fn tasks]
   (for [{:keys [interval task-fn] :as task} tasks]
@@ -29,19 +31,21 @@
       data)))
 
 (defn- get-venue-ids [venue-fn {:keys [venues]}]
+  "Given a list of venue terms, retrieves the associated venue ids."
   )
 
-(defn- add-task-and-respond [create-task-fn notify-fn command]
-  
-  (let [{:keys [extract-fn alert-fn]} (create-task-fn command)]
+(defn- add-task-and-respond [scraper notify-fn {:keys [venues date start-time end-time] :as command}]
+  ;; TODO get venues
+  (letfn [(extract-fn [_] (task/fetch-gotcourts-availabilities 
+                           (partial scraper/fetch-availabilities scraper) venues date start-time end-time))
+          (alert-fn [old-data data] (task/get-alerts old-data data))]
     [{:success :task-added :options command}
      [{:task-id (dissoc command :command)
        :interval (t/minutes 5)
-       :task-fn (extract-and-alert-task-fn (:date command) 
-                                           notify-fn extract-fn alert-fn)}]]))
+       :task-fn (extract-and-alert-task-fn date notify-fn extract-fn alert-fn)}]]))
 
-(defn- create-tasks-and-response [schedule-fn create-task-fn notify-fn command]
-  (let [[response new-tasks] (add-task-and-respond create-task-fn 
+(defn- create-tasks-and-response [schedule-fn scraper notify-fn command]
+  (let [[response new-tasks] (add-task-and-respond scraper 
                                                    notify-fn 
                                                    command)
         new-started-tasks    (start-tasks schedule-fn new-tasks)]
@@ -50,7 +54,7 @@
                           (map (fn [[id tasks]] [id (first tasks)]))
                           (into {})))]))
 
-(defn- handle-message* [schedule-fn create-task-fn tasks-db user args send-to-user-fn]
+(defn- handle-message* [schedule-fn scraper tasks-db user args send-to-user-fn]
   (let [[command error] (notify-parser/parse-command-chunks args)]
     (if error (send-to-user-fn (assoc error 
                                       :text (notify-message/get-message error)))
@@ -60,15 +64,15 @@
                                       (assoc response :text
                                        (notify-message/get-message response)))) 
               [response new-tasks] (create-tasks-and-response schedule-fn 
-                                                              create-task-fn 
+                                                              scraper
                                                               notify-fn 
                                                               command)]
           (swap! tasks-db assoc user new-tasks)
           (send-to-user-fn
            (assoc response :text (notify-message/get-message response)))))))
 
-(defn create-notify-command [schedule-fn create-task-fn tasks-db]
-  (partial handle-message* schedule-fn create-task-fn tasks-db))
+(defn create-notify-command [schedule-fn scraper tasks-db]
+  (partial handle-message* schedule-fn scraper tasks-db))
 
 
 ;; (defmethod handle-command :delete-all [_ _ _ user-tasks]

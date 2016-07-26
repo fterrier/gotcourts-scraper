@@ -21,7 +21,5 @@
   :uberjar-name "gotcourts.jar"
   :target-path "target/%s"
   :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]]
-                   :source-paths ["env/dev/src"]
-                   :plugins [[lein-ring "0.9.7"]]
-                   :ring {:handler gotcourts.handler/app}}
+                   :source-paths ["env/dev/src"]}
              :uberjar {:aot :all}})

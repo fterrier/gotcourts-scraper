@@ -18,9 +18,8 @@
 (defn- create-notify-command [tasks-db]
   (let [schedule-fn    (fn [interval task-fn] 
                          (task-scheduler/add-chime scheduler/scheduler 
-                                                   interval task-fn))
-        create-task-fn (task/create-gotcourts-task-creator scraper/scraper)]
-    (notify-command/create-notify-command schedule-fn create-task-fn tasks-db)))
+                                                   interval task-fn))]
+    (notify-command/create-notify-command schedule-fn scraper/scraper tasks-db)))
 
 (defn- get-message [{:keys [error success] :as response}]
   (cond
@@ -36,8 +35,8 @@
 
 (defn- start-bot []
   (let [tasks-db   (atom {})
-        commands   [{:name "/notify"   :handle-fn (create-notify-command tasks-db)}
-                    {:name "/show" :handle-fn (create-show-command tasks-db)}]
+        commands   [{:name "/notify" :handle-fn (create-notify-command tasks-db)}
+                    {:name "/show"   :handle-fn (create-show-command tasks-db)}]
         bot        (bot/create-bot commands)]
     (fn [data ch]
       (bot data (partial send-to-user ch)))))
