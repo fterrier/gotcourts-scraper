@@ -1,7 +1,6 @@
 (ns gotcourts.checker
   (:require [clojure.edn :as edn]))
 
-
 (defn- filter-free-slots [free-slots starttime endtime]
   (->> free-slots
        (filter #(or

@@ -28,7 +28,11 @@
                                         date))))
       data)))
 
+(defn- get-venue-ids [venue-fn {:keys [venues]}]
+  )
+
 (defn- add-task-and-respond [create-task-fn notify-fn command]
+  
   (let [{:keys [extract-fn alert-fn]} (create-task-fn command)]
     [{:success :task-added :options command}
      [{:task-id (dissoc command :command)
