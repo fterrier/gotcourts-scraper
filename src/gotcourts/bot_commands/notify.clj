@@ -30,24 +30,29 @@
                                         date))))
       data)))
 
-(defn- get-venue-ids [venue-fn {:keys [venues]}]
+(defn- add-venue-map [scraper {:keys [venues] :as command}]
   "Given a list of venue terms, retrieves the associated venue ids."
-  )
+  (let [venue-map     (task/fetch-gotcourts-venues (partial scraper/fetch-venues scraper) venues)
+        chosen-venues (->> venue-map
+                           (map (fn [[_ venues]] (first venues)))
+                           (remove nil?))]
+    (assoc command :chosen-venues chosen-venues)))
 
-(defn- add-task-and-respond [scraper notify-fn {:keys [venues date start-time end-time] :as command}]
-  ;; TODO get venues
+(defn- add-task-and-respond [scraper notify-fn {:keys [chosen-venues date start-time end-time] :as command}]
   (letfn [(extract-fn [_] (task/fetch-gotcourts-availabilities 
-                           (partial scraper/fetch-availabilities scraper) venues date start-time end-time))
+                           (partial scraper/fetch-availabilities scraper) 
+                           (map :id chosen-venues) date start-time end-time))
           (alert-fn [old-data data] (task/get-alerts old-data data))]
     [{:success :task-added :options command}
      [{:task-id (dissoc command :command)
+       :command command
        :interval (t/minutes 5)
        :task-fn (extract-and-alert-task-fn date notify-fn extract-fn alert-fn)}]]))
 
 (defn- create-tasks-and-response [schedule-fn scraper notify-fn command]
   (let [[response new-tasks] (add-task-and-respond scraper 
                                                    notify-fn 
-                                                   command)
+                                                   (add-venue-map scraper command))
         new-started-tasks    (start-tasks schedule-fn new-tasks)]
     [response (merge (->> new-started-tasks
                           (group-by :task-id)

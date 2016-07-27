@@ -1,7 +1,8 @@
 (ns app.bot
   (:require [app
              [scheduler :as scheduler]
-             [scraper :as scraper]]
+             [scraper :as scraper]
+             [database :as database]]
             [bot.bot :as bot]
             [clojure.core.async :refer [>!!]]
             [gotcourts.bot-commands
@@ -34,11 +35,11 @@
          text)))
 
 (defn- start-bot []
-  (let [tasks-db   (atom {})
-        commands   [{:name "/notify" :handle-fn (create-notify-command tasks-db)}
-                    {:name "/show"   :handle-fn (create-show-command tasks-db)}]
+  (let [commands   [{:name "/notify" :handle-fn (create-notify-command database/db)}
+                    {:name "/show"   :handle-fn (create-show-command database/db)}]
         bot        (bot/create-bot commands)]
     (fn [data ch]
       (bot data (partial send-to-user ch)))))
 
-(defstate bot :start (start-bot))
+(defstate bot 
+  :start (start-bot))

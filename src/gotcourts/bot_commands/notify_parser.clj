@@ -57,7 +57,6 @@
 (defn- parse-venues [venues-text]
   (let [venues (str/split venues-text #",")]
     (->> venues
-         (map parse-int)
          (remove nil?))))
 
 (def init-parser! (memoize (fn [] (duckling/load! {:languages ["en"]}))))

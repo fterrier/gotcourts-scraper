@@ -1,6 +1,8 @@
 (ns gotcourts.bot-commands.notify-message
-  (:require [clj-time.core :as t]
-            [clj-time.format :as f]))
+  (:require [clj-time
+             [core :as t]
+             [format :as f]]
+            [clojure.string :as str]))
 
 (def human-date-formatter (f/formatter "EEE, dd MMM yyyy" (t/default-time-zone)))
 
@@ -55,8 +57,11 @@
        (apply str "The following slots are not available any more:\n" 
               (map #(get-slot-text (:courts venue) %) gone-slots))))))
 
-(defn- get-task-added-message [{:keys [date start-time end-time]}]
-  "Task added successfuly. You will be notified as soon as a court becomes available.")
+(defn- get-task-added-message [{:keys [date start-time end-time chosen-venues]}]
+  (str "Got it, will notify you as soon as a court is available at "
+       (str/join ", " (map :name chosen-venues)) " on "
+       (f/unparse human-date-formatter date) " between "
+       (from-seconds start-time) " and " (from-seconds end-time) "."))
 
 (defn get-message [{:keys [error success type options]}]
   (cond 
