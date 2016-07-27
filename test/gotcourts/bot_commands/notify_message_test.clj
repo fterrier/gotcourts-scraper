@@ -39,4 +39,14 @@
             {:success :new-alert 
              :options {:date test-date
                        :new-venue false
-                       :alerts-per-venue test-alerts}})))))
+                       :alerts-per-venue test-alerts}}))))
+  
+  (testing "Message on new task"
+    (is (= {:message "Got it, will notify you as soon as a court is available at TA Irchel on Fri, 27 Nov 2015 between 11:40 and 13:20."}
+           (bot-notify-message/get-message
+            {:success :task-added
+             :options {:command "/notify"
+                       :date test-date
+                       :start-time 42000
+                       :end-time 48000
+                       :chosen-venues [{:id 5 :name "TA Irchel"}]}})))))
