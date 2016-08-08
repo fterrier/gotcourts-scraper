@@ -17,9 +17,10 @@
   (show-command/create-show-command tasks-db))
 
 (defn- create-notify-command [tasks-db]
-  (let [schedule-fn    (fn [interval task-fn] 
-                         (task-scheduler/add-chime scheduler/scheduler 
-                                                   interval task-fn))]
+  (let [schedule-fn    (fn [options task-fn]
+                         (task-scheduler/add-chime scheduler/scheduler
+                                                   options
+                                                   task-fn))]
     (notify-command/create-notify-command schedule-fn scraper/scraper tasks-db)))
 
 (defn- get-message [{:keys [error success] :as response}]

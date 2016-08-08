@@ -8,8 +8,8 @@
              [notify-parser :as notify-parser]]))
 
 (defn- start-tasks [schedule-fn tasks]
-  (for [{:keys [interval task-fn] :as task} tasks]
-    (assoc task :stop-fn (schedule-fn interval task-fn))))
+  (for [{:keys [options task-fn] :as task} tasks]
+    (assoc task :stop-fn (schedule-fn options task-fn))))
 
 (defn- get-alert-message [alerts-per-venue is-new date]
   "Takes as a parametere a alerts-per-venue vector:
@@ -46,7 +46,7 @@
     [{:success :task-added :options command}
      [{:task-id (dissoc command :command)
        :command command
-       :interval (t/minutes 5)
+       :options {:interval (t/minutes 5) :until (t/plus date (t/seconds end-time))}
        :task-fn (extract-and-alert-task-fn date notify-fn extract-fn alert-fn)}]]))
 
 (defn- create-tasks-and-response [schedule-fn scraper notify-fn command]

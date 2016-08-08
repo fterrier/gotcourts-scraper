@@ -1,5 +1,8 @@
 (ns gotcourts.bot-commands.notify-test
-  (:require [clojure
+  (:require [clj-time
+             [core :as t]
+             [format :as f]]
+            [clojure
              [edn :as edn]
              [test :refer [deftest is testing]]]
             [gotcourts.bot-commands.notify :as bot-commands]
@@ -26,9 +29,9 @@
                             (is (= :task-added (:success response)))
                             (is (nil? (:error response))))
           tasks-db (atom {})
-          scraper (mock-scraper {:venue-fixtures {"1" "fixtures/asvz.edn"}})
+          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
           notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
-      (notify-command "user" ["1" "10:00-11:00" "27-11-2015"] send-to-user-fn)
+      (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 1 (count @tasks-db)))
       (let [tasks    (get @tasks-db "user")
             [_ task] (first tasks)]
@@ -38,13 +41,27 @@
     (let [schedule-fn (fn [_ _])
           send-to-user-fn (fn [response])
           tasks-db (atom {})
-          scraper (mock-scraper {:venue-fixtures {"1" "fixtures/asvz.edn"}})
+          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
           notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
-      (notify-command "user" ["1" "10:00-11:00" "27-11-2015"] send-to-user-fn)
+      (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 1 (count @tasks-db)))
       (let [tasks    (get @tasks-db "user")
             [_ task] (first tasks)]
-        (is (= [{:id 6 :name "ASVZ Tennisanlage Fluntern"}] (:chosen-venues (:command task))))))))
+        (is (= [{:id 6 :name "ASVZ Tennisanlage Fluntern"}] (:chosen-venues (:command task)))))))
+  
+  (testing "Options until/interval are properly set"
+    (let [schedule-fn (fn [options _] (is (= {:interval (t/minutes 5)
+                                              :until (f/parse (f/formatter "yyyy-MM-dd'T'HH:mm:ss"
+                                                                           (t/default-time-zone))
+                                                              "2015-11-27T11:00:00")} options)))
+          send-to-user-fn (fn [response] 
+                            (is (= :task-added (:success response)))
+                            (is (nil? (:error response))))
+          tasks-db (atom {})
+          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
+          notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
+      (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
+      (is (= 1 (count @tasks-db))))))
 
   
   ;; (testing "Commands :stop stops all tasks"
