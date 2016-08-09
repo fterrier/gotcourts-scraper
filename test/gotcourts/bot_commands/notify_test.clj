@@ -33,7 +33,7 @@
           notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
       (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 1 (count @tasks-db)))
-      (let [tasks    (get @tasks-db "user")
+      (let [tasks    (get-in @tasks-db ["user" :tasks])
             [_ task] (first tasks)]
         (is (= :mock-stop-fn (:stop-fn task))))))
   
@@ -45,7 +45,7 @@
           notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
       (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 1 (count @tasks-db)))
-      (let [tasks    (get @tasks-db "user")
+      (let [tasks    (get-in @tasks-db ["user" :tasks])
             [_ task] (first tasks)]
         (is (= [{:id 6 :name "ASVZ Tennisanlage Fluntern"}] (:chosen-venues (:command task)))))))
   
@@ -62,17 +62,4 @@
           notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
       (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 1 (count @tasks-db))))))
-
-  
-  ;; (testing "Commands :stop stops all tasks"
-  ;;   (let [command {:command :delete-all}
-  ;;         schedule-fn (fn [_ _] :mock-stop-fn)
-  ;;         create-task-fn (fn [_])
-  ;;         notify-fn (fn [_])
-  ;;         [response tasks] (bot/create-tasks-and-response schedule-fn create-task-fn notify-fn
-  ;;                                              {:test-task {:task-id :test-task :stop-fn (fn [])}} 
-  ;;                                              {:command command})]
-  ;;     (is (= :task-deleted-all (:success response)))
-  ;;     (is (= {} tasks))))
-  
 

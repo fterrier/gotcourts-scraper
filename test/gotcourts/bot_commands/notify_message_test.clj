@@ -47,6 +47,5 @@
             {:success :task-added
              :options {:command "/notify"
                        :date test-date
-                       :start-time 42000
-                       :end-time 48000
+                       :time [42000 48000]
                        :chosen-venues [{:id 5 :name "TA Irchel"}]}})))))

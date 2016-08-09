@@ -1,4 +1,4 @@
-(ns gotcourts.bot-commands.notify-parser
+(ns bot.command-parser
   (:require [clj-time
              [core :as t]
              [format :as f]]
@@ -27,12 +27,12 @@
     (if-not parsed-time nil
       (t/in-seconds (t/interval ref-time parsed-time)))))
 
-(defn- parse-hours [hours-text]
+(defn- parse-timespan [hours-text]
   (let [times      (str/split hours-text #"-")
         start-time (number-of-seconds (first times))
         end-time   (number-of-seconds (second times))]
     (if
-      (not= (count times) 2) [nil nil]
+      (not= (count times) 2) nil
       [start-time end-time])))
 
 (defn- parse-int [string]
@@ -54,32 +54,35 @@
     (if parsed-time parsed-time
         (parse-known-expressions string))))
 
-(defn- parse-venues [venues-text]
-  (let [venues (str/split venues-text #",")]
-    (->> venues
+(defn- parse-list [list-text]
+  (let [items (str/split list-text #",")]
+    (->> items
          (remove nil?))))
 
-(def init-parser! (memoize (fn [] (duckling/load! {:languages ["en"]}))))
+(def ^:private init-parser! (memoize (fn [] (duckling/load! {:languages ["en"]}))))
 
-(defn parse-command-chunks [args]
-  "/notify <venues> <hours> <time span in natural language>"
+(defn- parse-command-chunk [format-arg args]
+  (case format-arg
+    :list     [(parse-list (first args)) (rest args)]
+    :timespan [(parse-timespan (first args)) (rest args)]
+    :date     [(parse-date (str/join " " args)) []]
+    :default  [nil args]))
+
+(defn parse-command-chunks [format-args args]
+  "Given a list of expected formats and arguments, returns the parsed arguments in the 
+   given order. For each arg in format-args, returns {:value ... :type ...} where :value is nil
+   if the arg could not be properly parsed. 
+   Returns a [parsed-args errors] vector."
   (init-parser!)
-  (if (< (count args) 3)
-    [nil {:error :format-error :type :args}]
-    (let [venues                (parse-venues (first args))
-          [start-time end-time] (parse-hours (second args))
-          date                  (parse-date (str/join " " (drop 2 args)))]
-      (cond
-        (empty? venues) 
-        [nil {:error :format-error :type :venues}]
-        (or (nil? start-time) (nil? end-time))
-        [nil {:error :format-error :type :time}]
-        (nil? date)
-        [nil {:error :format-error :type :date}]
-        :else
-        [{:command :add
-          :start-time start-time
-          :end-time end-time
-          :date date
-          :venues venues}]))))
+  (let [[parsed-args remaining-args] 
+        (reduce (fn [[parsed-args remaining-args] format-arg]
+                  (if (empty? remaining-args)
+                    [parsed-args remaining-args]
+                    (let [[parsed-arg remaining-args] (parse-command-chunk format-arg remaining-args)]
+                      [(conj parsed-args parsed-arg) remaining-args])))
+                [[] args] format-args)]
+    (cond 
+      (not (empty? remaining-args)) [parsed-args {:error :format-error :type :too-many-args}]
+      (not (= (count format-args) (count parsed-args))) [parsed-args {:error :format-error :type :not-enough-args}]
+      :else [parsed-args nil])))
 

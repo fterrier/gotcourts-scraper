@@ -1,7 +1,5 @@
 (ns gotcourts.bot-commands.show)
 
-
-
 (defn- get-message [{:keys [success options] :as message}]
   (case success
     :show {:message (str options)}
@@ -12,8 +10,8 @@
     {:success :show-no-tasks}
     {:success :show :options user-tasks}))
 
-(defn handle-show* [tasks-db _ _ send-to-user-fn]
-  (let [response (render-tasks @tasks-db)]  
+(defn handle-show* [tasks-db user _ send-to-user-fn]
+  (let [response (render-tasks (get-in @tasks-db [user :tasks]))]  
     (send-to-user-fn 
      (assoc response :text (get-message response)))))
 

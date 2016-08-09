@@ -57,11 +57,12 @@
        (apply str "The following slots are not available any more:\n" 
               (map #(get-slot-text (:courts venue) %) gone-slots))))))
 
-(defn- get-task-added-message [{:keys [date start-time end-time chosen-venues]}]
-  (str "Got it, will notify you as soon as a court is available at "
-       (str/join ", " (map :name chosen-venues)) " on "
-       (f/unparse human-date-formatter date) " between "
-       (from-seconds start-time) " and " (from-seconds end-time) "."))
+(defn- get-task-added-message [{:keys [date time chosen-venues]}]
+  (let [[start-time end-time] time]
+    (str "Got it, will notify you as soon as a court is available at "
+         (str/join ", " (map :name chosen-venues)) " on "
+         (f/unparse human-date-formatter date) " between "
+         (from-seconds start-time) " and " (from-seconds end-time) ".")))
 
 (defn get-message [{:keys [error success type options]}]
   (cond 

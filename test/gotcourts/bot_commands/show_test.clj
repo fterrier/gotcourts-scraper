@@ -9,9 +9,9 @@
           send-to-user-fn (fn [response] (is (= {:success :show :options {}}) response))]
       (show-command nil ["this" "is" "rubbish"] send-to-user-fn)))
 
-  (testing "Commands :show shows the tasks"
-    (let [tasks-db        (atom {:test-task {:task-id :test-task}})
+  (testing "Commands :show shows the tasks of the right user"
+    (let [tasks-db        (atom {"user" {:tasks {:test-task {:task-id :test-task}}}})
           show-command    (bot-commands/create-show-command tasks-db)
           send-to-user-fn (fn [response] (is (= {:success :show :options {:test-task {:task-id :test-task}}}) 
                                              response))]
-      (show-command nil ["this" "is" "rubbish"] send-to-user-fn))))
+      (show-command "user" [] send-to-user-fn))))
