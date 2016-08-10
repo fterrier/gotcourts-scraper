@@ -4,9 +4,8 @@
             [gotcourts
              [scraper :as scraper]
              [task :as task]]
-            [bot.command-parser :as parser]
-            [gotcourts.bot-commands
-             [notify-message :as notify-message]]))
+            [gotcourts.bot-commands.command :as command]
+            [gotcourts.bot-commands.notify-message :as notify-message]))
 
 (defn- start-tasks [schedule-fn tasks]
   (for [{:keys [options task-fn] :as task} tasks]
@@ -61,37 +60,29 @@
                           (map (fn [[id tasks]] [id (first tasks)]))
                           (into {})))]))
 
-(defn- parse-command-chunks [args]
-  (let [format-type-args    [[:venues :list]
-                             [:time :timespan]
-                             [:date :date]]
-        format-args         (map second format-type-args)
-        type-args           (map first format-type-args)
-        [parsed-args error] (parser/parse-command-chunks format-args args)]
-    (if error
-      [nil error]
-      (reduce (fn [[command error] [type value]]
-                (if (nil? value) 
-                  (reduced [nil {:error :format-error :type type}])
-                  [(assoc command type value) nil]))
-              [{} nil] (map vector type-args parsed-args)))))
+(defn- handle-message* [schedule-fn scraper tasks-db 
+                        user command send-to-user-fn]
+  (let [tasks                (get @tasks-db user)
+        notify-fn            (fn [response] 
+                               (send-to-user-fn 
+                                (assoc response :text (notify-message/get-message response)))) 
+        [response new-tasks] (create-tasks-and-response schedule-fn 
+                                                        scraper
+                                                        notify-fn 
+                                                        command)]
+    (swap! tasks-db assoc-in [user :tasks] new-tasks)
+    (send-to-user-fn
+     (assoc response :text (notify-message/get-message response)))))
 
-(defn- handle-message* [schedule-fn scraper tasks-db user args send-to-user-fn]
-  (let [[command error] (parse-command-chunks args)]
-    (if error (send-to-user-fn (assoc error :text (notify-message/get-message error)))
-        (let [tasks                (get @tasks-db user)
-              notify-fn            (fn [response] 
-                                     (send-to-user-fn 
-                                      (assoc response :text
-                                       (notify-message/get-message response)))) 
-              [response new-tasks] (create-tasks-and-response schedule-fn 
-                                                              scraper
-                                                              notify-fn 
-                                                              command)]
-          (swap! tasks-db assoc-in [user :tasks] new-tasks)
-          (send-to-user-fn
-           (assoc response :text (notify-message/get-message response)))))))
+(def format-message 
+  "Use format /notify <courts> <time> <date>. For example, to get an alert when a court becomes available:
+   - /notify 15,14 15:00-17:00 27-11-2016")
 
 (defn create-notify-command [schedule-fn scraper tasks-db]
-  (partial handle-message* schedule-fn scraper tasks-db))
+  (command/create-command
+   (partial handle-message* schedule-fn scraper tasks-db)
+   [[:venues :list     "Wrong format for venues."]
+    [:time   :timespan "Wrong format for time."]
+    [:date   :date     "Wrong format for date."]]
+   format-message))
 

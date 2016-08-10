@@ -62,6 +62,7 @@
 (def ^:private init-parser! (memoize (fn [] (duckling/load! {:languages ["en"]}))))
 
 (defn- parse-command-chunk [format-arg args]
+  "Returns [parsed-arg remaining-args]."
   (case format-arg
     :list     [(parse-list (first args)) (rest args)]
     :timespan [(parse-timespan (first args)) (rest args)]
