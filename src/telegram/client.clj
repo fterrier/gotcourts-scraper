@@ -32,5 +32,5 @@
 
 (comment 
   @(send-message "152122841:AAE4iFW3JNdANZ0lPpibZ5pf-vYmH5z-p2w" "@fterrier" "test")
-  @(get-me "152122841:AAE4iFW3JNdANZ0lPpibZ5pf-vYmH5z-p2w")
-  @(set-webhook "152122841:AAE4iFW3JNdANZ0lPpibZ5pf-vYmH5z-p2w" "https://73ed7de4.ngrok.io/telegram"))
+  @(get-me       "152122841:AAE4iFW3JNdANZ0lPpibZ5pf-vYmH5z-p2w")
+  @(set-webhook  "152122841:AAE4iFW3JNdANZ0lPpibZ5pf-vYmH5z-p2w" "https://73ed7de4.ngrok.io/telegram"))

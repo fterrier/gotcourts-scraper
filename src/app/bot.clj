@@ -38,10 +38,16 @@
          (get-message response)
          text)))
 
+(defn- match-first [text]
+  (fn [args] (= (first args) text)))
+
 (defn- start-bot []
-  (let [commands   [{:name "/notify" :handle-fn (create-notify-command database/db)}
-                    {:name "/show"   :handle-fn (create-show-command database/db)}
-                    {:name "/find"   :handle-fn (create-find-command database/db)}]
+  (let [commands   [{:match-fn (match-first "/notify") 
+                     :handle-fn (create-notify-command database/db)}
+                    {:match-fn (match-first "/show")
+                     :handle-fn (create-show-command database/db)}
+                    {:match-fn (match-first "/find")
+                     :handle-fn (create-find-command database/db)}]
         bot        (bot/create-bot commands)]
     (fn [data ch]
       (bot data (partial send-to-user ch)))))
