@@ -82,20 +82,13 @@
         (send-to-user-fn (message/assoc-message response))))))
 
 (def format-message 
-  "Use format /notify <courts> <time> <date>. For example, to get an alert when a court becomes available:
-   - /notify asvz 15:00-17:00 27-11-2016")
+  "Use /find <courts> <time> <date> to look for a court.")
 
 (defn create-notify-command [schedule-fn scraper db]
-  (let [type-format-message-args [[:venues :list     "Wrong format for venues."]
-                                  [:time   :timespan "Wrong format for time."]
-                                  [:date   :date     "Wrong format for date."]]
-        handle-fn (partial handle-command* schedule-fn scraper db)]
+  (let [handle-fn (partial handle-command* schedule-fn scraper db)]
     (fn [user args send-to-user-fn]
-      (if (empty? args)
-        (retrieve-from-history handle-fn db user send-to-user-fn)
-        (let [[command error] (command/parse-command type-format-message-args
-                                                     args format-message)]
-          (if error
-            (send-to-user-fn error)
-            (handle-fn user command send-to-user-fn)))))))
+      (let [[command error] (command/parse-command [] args format-message)]
+        (if error
+          (send-to-user-fn error)
+          (retrieve-from-history handle-fn db user send-to-user-fn))))))
 
