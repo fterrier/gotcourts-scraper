@@ -34,9 +34,13 @@
    - /find asvz 15:00-17:00 27-11-2016")
 
 (defn create-find-command [scraper db]
-  (command/create-command
-   (partial handle-message* scraper db)
-   [[:venues :list     "Wrong format for venues."]
-    [:time   :timespan "Wrong format for time."]
-    [:date   :date     "Wrong format for date."]]
-   format-message))
+  (let [type-format-message-args [[:venues :list     "Wrong format for venues."]
+                                  [:time   :timespan "Wrong format for time."]
+                                  [:date   :date     "Wrong format for date."]]
+        handle-fn                (partial handle-message* scraper db)]
+    (fn [user args send-to-user-fn]
+      (let [[command error] (command/parse-command type-format-message-args 
+                                                   args format-message)]
+        (if error
+          (send-to-user-fn error)
+          (handle-fn user command send-to-user-fn))))))

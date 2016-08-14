@@ -8,6 +8,9 @@
             [gotcourts.bot-commands.notify :as bot-commands]
             [gotcourts.scraper :as scraper]))
 
+(def test-date 
+  (f/parse (f/formatter "dd-MM-yyyy" (t/default-time-zone)) "27-11-2015"))
+
 (defn- mock-scraper [{:keys [venue-fixtures]}]
   (reify scraper/Scrape 
     (fetch-availabilities [_ params] )
@@ -49,10 +52,11 @@
         (is (= [{:id 6 :name "ASVZ Tennisanlage Fluntern"}] (:chosen-venues (:command task)))))))
   
   (testing "Options until/interval are properly set"
-    (let [schedule-fn (fn [options _] (is (= {:interval (t/minutes 5)
-                                              :until (f/parse (f/formatter "yyyy-MM-dd'T'HH:mm:ss"
-                                                                           (t/default-time-zone))
-                                                              "2015-11-27T11:00:00")} options)))
+    (let [schedule-fn (fn [options _] 
+                        (is (= {:interval (t/minutes 5)
+                                :until (f/parse (f/formatter "yyyy-MM-dd'T'HH:mm:ss"
+                                                             (t/default-time-zone))
+                                                "2015-11-27T11:00:00")} options)))
           send-to-user-fn (fn [response] 
                             (is (= :task-added (:success response)))
                             (is (nil? (:error response))))
@@ -62,5 +66,29 @@
       (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 1 (count @db)))))
   
-  (testing "Command notify after find sets notification for find"
-    (is false)))
+  (testing "Command notify after find sets notification for find - scraper not used"
+    (let [schedule-fn     (fn [_ _])
+          send-to-user-fn (fn [response] 
+                            (is (= :task-added (:success response)))
+                            (is (nil? (:error response))))
+          db (atom {"user" {:find-history
+                            [{:venues ["asvz"],
+                              :time [36000 39600],
+                              :date test-date
+                              :chosen-venues 
+                              [{:id 6 
+                                :name "ASVZ Tennisanlage Fluntern"}]}]}})
+          notify-command (bot-commands/create-notify-command schedule-fn nil db)]
+      (notify-command "user" [] send-to-user-fn)
+      (is (= 1 (count @db)))
+      (let [tasks    (get-in @db ["user" :tasks])
+            [_ task] (first tasks)]
+        (is (= [{:id 6 :name "ASVZ Tennisanlage Fluntern"}] (:chosen-venues (:command task)))))))
+
+  (testing "Command notify after find with no history sends error"
+    (let [send-to-user-fn (fn [response]
+                            (is (nil? (:success response)))
+                            (is (= :no-command-history (:error response))))
+          db (atom {})
+          notify-command (bot-commands/create-notify-command nil nil db)]
+      (notify-command "user" [] send-to-user-fn))))

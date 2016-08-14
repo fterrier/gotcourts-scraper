@@ -37,10 +37,3 @@
                                        (into {}))
                                   format-message)))]
     [command error]))
-
-(defn create-command [handle-fn type-format-message-args format-message]
-  (fn [user args send-to-user-fn]
-    (let [[command error] (parse-command-chunks type-format-message-args args)]
-      (if error 
-        (send-to-user-fn error)
-        (handle-fn user command send-to-user-fn)))))

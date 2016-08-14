@@ -49,18 +49,21 @@
          :task-fn (extract-and-alert-task-fn date 
                                              notify-fn extract-fn alert-fn)}]])))
 
+(defn- add-venue-map [scraper {:keys [chosen-venues] :as command}]
+  (if chosen-venues command
+    (common/add-venue-map scraper command)))
+
 (defn- create-tasks-and-response [schedule-fn scraper notify-fn command]
   (let [[response new-tasks] (add-task-and-respond 
                               scraper notify-fn
-                              (common/add-venue-map scraper command))
+                              (add-venue-map scraper command))
         new-started-tasks    (start-tasks schedule-fn new-tasks)]
     [response (merge (->> new-started-tasks
                           (group-by :task-id)
                           (map (fn [[id tasks]] [id (first tasks)]))
                           (into {})))]))
 
-(defn- handle-message* [schedule-fn scraper db 
-                        user command send-to-user-fn]
+(defn- handle-command* [schedule-fn scraper db user command send-to-user-fn]
   (let [tasks                (get @db user)
         notify-fn            (fn [response] 
                                (send-to-user-fn 
@@ -73,15 +76,29 @@
     (send-to-user-fn
      (assoc response :text (message/get-message response)))))
 
+(defn- retrieve-from-history [handle-fn db user send-to-user-fn]
+  (let [command (last (get-in @db [user :find-history]))]
+    (if command
+      (handle-fn user command send-to-user-fn)
+      (let [response {:error :no-command-history}]
+        (send-to-user-fn (assoc response :text
+                                (message/get-message response)))))))
+
 (def format-message 
   "Use format /notify <courts> <time> <date>. For example, to get an alert when a court becomes available:
    - /notify asvz 15:00-17:00 27-11-2016")
 
 (defn create-notify-command [schedule-fn scraper db]
-  (command/create-command
-   (partial handle-message* schedule-fn scraper db)
-   [[:venues :list     "Wrong format for venues."]
-    [:time   :timespan "Wrong format for time."]
-    [:date   :date     "Wrong format for date."]]
-   format-message))
+  (let [type-format-message-args [[:venues :list     "Wrong format for venues."]
+                                  [:time   :timespan "Wrong format for time."]
+                                  [:date   :date     "Wrong format for date."]]
+        handle-fn (partial handle-command* schedule-fn scraper db)]
+    (fn [user args send-to-user-fn]
+      (if (empty? args)
+        (retrieve-from-history handle-fn db user send-to-user-fn)
+        (let [[command error] (command/parse-command type-format-message-args
+                                                     args format-message)]
+          (if error
+            (send-to-user-fn error)
+            (handle-fn user command send-to-user-fn)))))))
 

@@ -53,7 +53,9 @@
 
 (defn- get-no-alerts-message [_])
 
-(defn get-message [{:keys [success type options]}]
+(defn- get-no-command-history-message [_])
+
+(defn get-message [{:keys [success error type options]}]
   (cond 
     (= success :task-added) 
     {:message (get-task-added-message options)}
@@ -62,4 +64,6 @@
      :options {:parse-mode :markdown}}
     (= success :no-alerts)
     {:message (get-no-alerts-message options)
-     :options {:parse-mode :markdown}}))
+     :options {:parse-mode :markdown}}
+    (= error :no-command-history)
+    {:message (get-no-command-history-message options)}))
