@@ -65,24 +65,21 @@
 
 (defn- handle-command* [schedule-fn scraper db user command send-to-user-fn]
   (let [tasks                (get @db user)
-        notify-fn            (fn [response] 
-                               (send-to-user-fn 
-                                (assoc response :text (message/get-message response)))) 
+        notify-fn            (fn [response]
+                               (send-to-user-fn (message/assoc-message response))) 
         [response new-tasks] (create-tasks-and-response schedule-fn 
                                                         scraper
                                                         notify-fn 
                                                         command)]
     (swap! db assoc-in [user :tasks] new-tasks)
-    (send-to-user-fn
-     (assoc response :text (message/get-message response)))))
+    (send-to-user-fn (message/assoc-message response))))
 
 (defn- retrieve-from-history [handle-fn db user send-to-user-fn]
   (let [command (last (get-in @db [user :find-history]))]
     (if command
       (handle-fn user command send-to-user-fn)
       (let [response {:error :no-command-history}]
-        (send-to-user-fn (assoc response :text
-                                (message/get-message response)))))))
+        (send-to-user-fn (message/assoc-message response))))))
 
 (def format-message 
   "Use format /notify <courts> <time> <date>. For example, to get an alert when a court becomes available:

@@ -45,10 +45,14 @@
 
     (testing "Command gets added at the end of the history"
     (let [send-to-user-fn (fn [response])
-          db (atom {"user" {:find-history [:history1]}})
-          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}
-                                 :availability-fixtures {6 "fixtures/hardhof.edn"}})
+          db (atom {})
+          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"
+                                                  "tennis" "fixtures/tennis.edn"}
+                                 :availability-fixtures 
+                                 {6 "fixtures/hardhof.edn"
+                                  13860 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
       (find-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
+      (find-command "user" ["tennis" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 2 (count (get-in @db ["user" :find-history]))))
-      (is (not= :history1 (last (get-in @db ["user" :find-history])))))))
+      (is (= ["tennis"] (:venues (last (get-in @db ["user" :find-history]))))))))

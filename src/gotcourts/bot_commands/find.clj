@@ -16,18 +16,17 @@
                         (partial scraper/fetch-availabilities scraper) 
                         (map :id chosen-venues) date start-time end-time)
         alerts         (alr/get-alerts nil availabilities)]
-    (swap! db update-in [user :find-history] conj command)
+    (swap! db update-in [user :find-history] concat [command])
     (if-not (empty? alerts)
       (doseq [[_ alerts-venue-map] alerts]
         (let [response {:success :new-alert 
                         :options {:alerts-venue-map alerts-venue-map
                                   :new-venue true
                                   :date date}}]
-          (send-to-user-fn (assoc response
-                                  :text (message/get-message response)))))
+          (send-to-user-fn (message/assoc-message response))))
       (do
-        (send-to-user-fn {:success :no-alerts
-                          :options {:date date}})))))
+        (send-to-user-fn (message/assoc-message {:success :no-alerts
+                                         :options command}))))))
 
 (def format-message 
   "Use format /find <courts> <time> <date>. For example, to get an alert when a court becomes available:

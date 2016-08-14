@@ -51,19 +51,25 @@
          (f/unparse human-date-formatter date) " between "
          (from-seconds start-time) " and " (from-seconds end-time) ".")))
 
-(defn- get-no-alerts-message [_])
+(defn- get-no-alerts-message [{:keys [date time chosen-venues]}]
+  (let [formatted-date (f/unparse human-date-formatter date)]
+    (str "The venue " (str/join ", " (map :name chosen-venues)) " has no courts available on " formatted-date " in the time you requested.\n\nType /notify to get notified as soon as a court becomes available.")))
 
-(defn- get-no-command-history-message [_])
+(defn- get-no-command-history-message [_]
+  (str "We did not find any /find commands in your history. Please first search for courts using /find <courts> <time> <date>."))
 
 (defn get-message [{:keys [success error type options]}]
   (cond 
-    (= success :task-added) 
+    (= success :task-added)
     {:message (get-task-added-message options)}
-    (= success :new-alert) 
-    {:message (get-new-alerts-message options) 
+    (= success :new-alert)
+    {:message (get-new-alerts-message options)
      :options {:parse-mode :markdown}}
     (= success :no-alerts)
     {:message (get-no-alerts-message options)
      :options {:parse-mode :markdown}}
     (= error :no-command-history)
     {:message (get-no-command-history-message options)}))
+
+(defn assoc-message [response]
+  (assoc response :text (get-message response)))
