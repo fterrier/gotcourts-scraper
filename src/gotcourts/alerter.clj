@@ -26,7 +26,7 @@
        (map (fn [[id courts]] [id (get courts 0)]))
        (into {})))
 
-(defn get-alerts [courts-before courts-after]
+(defn get-alerts-for-courts [courts-before courts-after]
   "- courts-before / courts-after
      A list of courts: [{:filtered-free-slots ...}]
    Returns a list of newly free slots."
@@ -36,3 +36,20 @@
                                      (keys courts-after-map)))]
     (concat
      (diff-free-slots courts-before-map courts-after-map all-courts))))
+
+(defn- get-alert-data [id old-data data]
+  {:alerts (get-alerts-for-courts 
+            (get-in old-data [id :courts]) (get-in data [id :courts]))
+   :venue  (get data id)})
+
+(defn get-alerts [old-data data]
+  "Takes as an input 2 maps of 
+   {<venue-id> {:name ... :courts [{:filtered-free-slots} ...]}] 
+   and returns a map of 
+   {<venue-id> {:alerts [...]} :venue {:name ... :courts ...}}"
+  (let [ids        (into #{} (concat (keys old-data) (keys data)))
+        alert-data (->> ids 
+                        (map (fn [id] [id (get-alert-data id old-data data)]))
+                        (remove (fn [[id alert-data]] (empty? (:alerts alert-data))))
+                        (into {}))]
+    alert-data))

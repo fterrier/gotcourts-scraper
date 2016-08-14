@@ -1,4 +1,4 @@
-(ns gotcourts.bot-commands.command
+(ns bot.command
   (:require [bot.command-parser :as parser]))
 
 (defn- parse-command-chunks [type-format-args args]
@@ -15,7 +15,6 @@
               [{} nil] (map vector type-args parsed-args)))))
 
 (defn- get-format-error-message [type type-message-map format-message]
-  (println type-message-map)
   {:message (str 
              (case type
                :too-many-args   "Wrong number of arguments."
@@ -24,14 +23,24 @@
              " " format-message)
    :options {:parse-mode :markdown}})
 
+(defn parse-command [type-format-message-args args format-message]
+  "Parses a list of args given a format, error message and type 
+   type-format-message-args [<type> <format> <message>] and a format-message.
+   Allowed types given by command-parser."
+  (let [[command error] (parse-command-chunks type-format-message-args args)
+        error           (when error 
+                          (assoc error :text 
+                                 (get-format-error-message 
+                                  (:type error)
+                                  (->> type-format-message-args
+                                       (map (fn [[type _ message]] [type message]))
+                                       (into {}))
+                                  format-message)))]
+    [command error]))
+
 (defn create-command [handle-fn type-format-message-args format-message]
   (fn [user args send-to-user-fn]
     (let [[command error] (parse-command-chunks type-format-message-args args)]
       (if error 
-        (send-to-user-fn (assoc error :text (get-format-error-message 
-                                             (:type error)
-                                             (->> type-format-message-args
-                                                  (map (fn [[type _ message]] [type message]))
-                                                  (into {}))
-                                             format-message)))
+        (send-to-user-fn error)
         (handle-fn user command send-to-user-fn)))))

@@ -12,10 +12,9 @@
   (reify scraper/Scrape 
     (fetch-availabilities [_ params] )
     (fetch-venues [_ {:keys [search]}] 
-      (println venue-fixtures)
       (future (edn/read-string (slurp (get venue-fixtures search)))))))
 
-(deftest bot-test
+(deftest notify-command-test
   (testing "Error outputs error message and no db change"
     (let [notify-command  (bot-commands/create-notify-command nil nil nil)
           send-to-user-fn (fn [response] 
@@ -28,24 +27,24 @@
           send-to-user-fn (fn [response] 
                             (is (= :task-added (:success response)))
                             (is (nil? (:error response))))
-          tasks-db (atom {})
+          db (atom {})
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
-          notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
+          notify-command (bot-commands/create-notify-command schedule-fn scraper db)]
       (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
-      (is (= 1 (count @tasks-db)))
-      (let [tasks    (get-in @tasks-db ["user" :tasks])
+      (is (= 1 (count @db)))
+      (let [tasks    (get-in @db ["user" :tasks])
             [_ task] (first tasks)]
         (is (= :mock-stop-fn (:stop-fn task))))))
   
   (testing "Venues are properly fetched"
     (let [schedule-fn (fn [_ _])
           send-to-user-fn (fn [response])
-          tasks-db (atom {})
+          db (atom {})
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
-          notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
+          notify-command (bot-commands/create-notify-command schedule-fn scraper db)]
       (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
-      (is (= 1 (count @tasks-db)))
-      (let [tasks    (get-in @tasks-db ["user" :tasks])
+      (is (= 1 (count @db)))
+      (let [tasks    (get-in @db ["user" :tasks])
             [_ task] (first tasks)]
         (is (= [{:id 6 :name "ASVZ Tennisanlage Fluntern"}] (:chosen-venues (:command task)))))))
   
@@ -57,9 +56,11 @@
           send-to-user-fn (fn [response] 
                             (is (= :task-added (:success response)))
                             (is (nil? (:error response))))
-          tasks-db (atom {})
+          db (atom {})
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
-          notify-command (bot-commands/create-notify-command schedule-fn scraper tasks-db)]
+          notify-command (bot-commands/create-notify-command schedule-fn scraper db)]
       (notify-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
-      (is (= 1 (count @tasks-db))))))
-
+      (is (= 1 (count @db)))))
+  
+  (testing "Command notify after find sets notification for find"
+    (is false)))

@@ -1,23 +1,10 @@
-(ns gotcourts.bot-commands.notify-message
+(ns gotcourts.bot-commands.message
   (:require [clj-time
              [core :as t]
              [format :as f]]
             [clojure.string :as str]))
 
 (def human-date-formatter (f/formatter "EEE, dd MMM yyyy" (t/default-time-zone)))
-
-(def format-message 
-  "Use format /notify <courts> <time> <date>. For example, to get an alert when a court becomes available:
-   - /notify 15,14 15:00-17:00 27-11-2016")
-
-(defn- get-format-error-message [type]
-  (str
-   (case type
-     :args   "Wrong number of arguments."
-     :venues "Wrong format for venues."
-     :time   "Wrong format for time."
-     :date   "Wrong format for date.")
-   " " format-message))
 
 (defn- filter-alerts-slots [alerts filter-type]
   (->> alerts
@@ -37,11 +24,11 @@
     (str " - " (from-seconds (:startTime slot)) "-" (from-seconds (:endTime slot)) 
          ": " (:label court) "\n")))
 
-(defn- get-new-alerts-message [{:keys [alerts-per-venue new-venue date]}]
-  (let [[_ {:keys [alerts venue]}] alerts-per-venue
-        new-slots                  (filter-alerts-slots alerts :new-slot)
-        gone-slots                 (filter-alerts-slots alerts :gone-slot)
-        formatted-date             (f/unparse human-date-formatter date)]
+(defn- get-new-alerts-message [{:keys [alerts-venue-map new-venue date]}]
+  (let [{:keys [alerts venue]} alerts-venue-map
+        new-slots              (filter-alerts-slots alerts :new-slot)
+        gone-slots             (filter-alerts-slots alerts :gone-slot)
+        formatted-date         (f/unparse human-date-formatter date)]
     (str (if new-venue 
            (str "The venue " (:name venue) 
                 " has courts available on " formatted-date
@@ -64,13 +51,15 @@
          (f/unparse human-date-formatter date) " between "
          (from-seconds start-time) " and " (from-seconds end-time) ".")))
 
-(defn get-message [{:keys [error success type options]}]
+(defn- get-no-alerts-message [_])
+
+(defn get-message [{:keys [success type options]}]
   (cond 
-    (= error :format-error) 
-    {:message (get-format-error-message type) 
-     :options {:parse-mode :markdown}}
     (= success :task-added) 
     {:message (get-task-added-message options)}
     (= success :new-alert) 
     {:message (get-new-alerts-message options) 
+     :options {:parse-mode :markdown}}
+    (= success :no-alerts)
+    {:message (get-no-alerts-message options)
      :options {:parse-mode :markdown}}))

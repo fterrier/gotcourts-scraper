@@ -44,29 +44,6 @@
       (is (= 9 (count (get-in data [17 :courts]))))
       (is (= 4 (count (get-in data [16 :courts])))))))
 
-(deftest get-alerts-test
-  (testing "Test alerts on same data produces empty alert data"
-    (let [data       (task/fetch-gotcourts-availabilities 
-                      (mock-availability-fn {17 "fixtures/hardhof.edn"})
-                      [17] (t/now) 50400 64800)
-          alerts     (task/get-alerts data data)]
-      (is (= nil (get-in alerts [17 :alerts])))))
-  
-  (testing "Test alerts on new data"
-    (let [data       (task/fetch-gotcourts-availabilities 
-                      (mock-availability-fn {17 "fixtures/hardhof.edn"})
-                      [17] (t/now) 50400 64800)
-          alerts     (task/get-alerts nil data)]
-      (is (= [[:new-slot {:slot {:startTime 50400, :endTime 64800}, :id 86}]
-              [:new-slot {:slot {:startTime 50400, :endTime 64800}, :id 88}]
-              [:new-slot {:slot {:startTime 43200, :endTime 61200}, :id 91}]
-              [:new-slot {:slot {:startTime 54000, :endTime 64800}, :id 90}]
-              [:new-slot {:slot {:startTime 50400, :endTime 57600}, :id 82}]
-              [:new-slot {:slot {:startTime 46800, :endTime 61200}, :id 83}]
-              [:new-slot {:slot {:startTime 50400, :endTime 61200}, :id 87}]
-              [:new-slot {:slot {:startTime 50400, :endTime 61200}, :id 84}]] 
-             (get-in alerts [17 :alerts]))))))
-
 (deftest fetch-venues-test
   (testing "Test get venues several at once"
     (let [data (task/fetch-gotcourts-venues

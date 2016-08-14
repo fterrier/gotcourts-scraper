@@ -7,6 +7,8 @@
              [checker :as chk]]
             [clojure.tools.logging :as log]))
 
+;; TODO integrate this file in the scraper maybe as scraping-service ?
+
 (def custom-formatter (f/formatter "YYYY-MM-dd" (t/default-time-zone)))
 
 (defn- venues-with-filtered [data start-time end-time]
@@ -20,7 +22,8 @@
        (into {})))
 
 (defn fetch-gotcourts-venues [venue-fn terms]
-  "Takes as an input a list of terms and returns a list of matching venues {:id ... :name ...}."
+  "Takes as an input a list of terms and returns a list of matching venues 
+   {:id ... :name ...}."
   (log/info "Extracting venues from gotcourts" terms)
   (let [params-list  (map (fn [term] {:search term}) terms)
         fetched-data (fetch-parallel venue-fn params-list)]
@@ -40,22 +43,4 @@
          (map (fn [[{:keys [id]} data]] 
                 [id (venues-with-filtered data start-time end-time)]))
          (into {}))))
-
-(defn- get-alert-data [id old-data data]
-  {:alerts (alr/get-alerts (get-in old-data [id :courts]) (get-in data [id :courts]))
-   :venue  (get data id)})
-
-;; TODO move into alerter.clj ?
-(defn get-alerts [old-data data]
-  "Takes as an input 2 maps of 
-   {<venue-id> {:name ... :courts [{:filtered-free-slots} ...]}] 
-   and returns a map of 
-   {<venue-id> {:alerts [...]} :venue {:name ... :courts ...}}"
-  (let [ids        (into #{} (concat (keys old-data) (keys data)))
-        alert-data (->> ids 
-                        (map (fn [id] [id (get-alert-data id old-data data)]))
-                        (remove (fn [[id alert-data]] (empty? (:alerts alert-data))))
-                        (into {}))]
-    alert-data))
-
 
