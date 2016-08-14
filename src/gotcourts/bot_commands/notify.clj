@@ -6,9 +6,7 @@
              [alerter :as alr]
              [scraper :as scraper]
              [task :as task]]
-            [gotcourts.bot-commands
-             [common :as common]
-             [message :as message]]))
+            [gotcourts.bot-commands.message :as message]))
 
 (defn- start-tasks [schedule-fn tasks]
   (for [{:keys [options task-fn] :as task} tasks]
@@ -49,14 +47,9 @@
          :task-fn (extract-and-alert-task-fn date 
                                              notify-fn extract-fn alert-fn)}]])))
 
-(defn- add-venue-map [scraper {:keys [chosen-venues] :as command}]
-  (if chosen-venues command
-    (common/add-venue-map scraper command)))
-
 (defn- create-tasks-and-response [schedule-fn scraper notify-fn command]
   (let [[response new-tasks] (add-task-and-respond 
-                              scraper notify-fn
-                              (add-venue-map scraper command))
+                              scraper notify-fn command)
         new-started-tasks    (start-tasks schedule-fn new-tasks)]
     [response (merge (->> new-started-tasks
                           (group-by :task-id)

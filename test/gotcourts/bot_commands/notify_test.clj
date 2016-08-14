@@ -11,6 +11,12 @@
 (def test-date 
   (f/parse (f/formatter "dd-MM-yyyy" (t/default-time-zone)) "27-11-2015"))
 
+(def test-history [{:venues ["asvz"],
+                    :time [36000 39600],
+                    :date test-date
+                    :chosen-venues 
+                    [{:id 6 :name "ASVZ Tennisanlage Fluntern"}]}])
+
 (defn- mock-scraper [{:keys [venue-fixtures]}]
   (reify scraper/Scrape 
     (fetch-availabilities [_ params] )
@@ -30,13 +36,7 @@
           send-to-user-fn (fn [response] 
                             (is (= :task-added (:success response)))
                             (is (nil? (:error response))))
-          db (atom {"user" {:find-history
-                            [{:venues ["asvz"],
-                              :time [36000 39600],
-                              :date test-date
-                              :chosen-venues 
-                              [{:id 6 
-                                :name "ASVZ Tennisanlage Fluntern"}]}]}})
+          db (atom {"user" {:find-history test-history}})
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
           notify-command (bot-commands/create-notify-command schedule-fn scraper db)]
       (notify-command "user" [] send-to-user-fn)
@@ -54,13 +54,7 @@
           send-to-user-fn (fn [response] 
                             (is (= :task-added (:success response)))
                             (is (nil? (:error response))))
-          db (atom {"user" {:find-history
-                            [{:venues ["asvz"],
-                              :time [36000 39600],
-                              :date test-date
-                              :chosen-venues 
-                              [{:id 6 
-                                :name "ASVZ Tennisanlage Fluntern"}]}]}})
+          db (atom {"user" {:find-history test-history}})
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
           notify-command (bot-commands/create-notify-command schedule-fn scraper db)]
       (notify-command "user" [] send-to-user-fn)
@@ -71,13 +65,7 @@
           send-to-user-fn (fn [response] 
                             (is (= :task-added (:success response)))
                             (is (nil? (:error response))))
-          db (atom {"user" {:find-history
-                            [{:venues ["asvz"],
-                              :time [36000 39600],
-                              :date test-date
-                              :chosen-venues 
-                              [{:id 6 
-                                :name "ASVZ Tennisanlage Fluntern"}]}]}})
+          db (atom {"user" {:find-history test-history}})
           notify-command (bot-commands/create-notify-command schedule-fn nil db)]
       (notify-command "user" [] send-to-user-fn)
       (is (= 1 (count @db)))
