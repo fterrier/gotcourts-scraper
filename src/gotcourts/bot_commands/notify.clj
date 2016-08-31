@@ -80,7 +80,7 @@
 (defn create-notify-command [schedule-fn scraper db]
   (let [handle-fn (partial handle-command* schedule-fn scraper db)]
     (fn [user args send-to-user-fn]
-      (let [[command error] (command/parse-command [] args format-message)]
+      (let [[command error] (command/parse-command [] (rest args) format-message)]
         (if error
           (send-to-user-fn error)
           (retrieve-from-history handle-fn db user send-to-user-fn))))))

@@ -19,7 +19,7 @@
           send-to-user-fn (fn [response]
                             (is (= :format-error (:error response)))
                             (is (= :time (:type response))))]
-      (find-command nil ["this" "is" "rubbish"] send-to-user-fn)))
+      (find-command nil ["/find" "this" "is" "rubbish"] send-to-user-fn)))
 
   (testing "Command find responds with free courts"
     (let [send-to-user-fn (fn [response]
@@ -33,7 +33,7 @@
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz_fluntern.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
-      (find-command "user" ["asvz" "17:00-20:00" "27-11-2015"] send-to-user-fn)
+      (find-command "user" ["/find" "asvz" "17:00-20:00" "27-11-2015"] send-to-user-fn)
       (is (= 
            {"asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}]}
            (:chosen-venues (first (get-in @db ["user" :find-history])))))))
@@ -49,7 +49,7 @@
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
-      (find-command "user" ["asvz" "17:00-20:00" "27-11-2015"] send-to-user-fn)
+      (find-command "user" ["/find" "asvz" "17:00-20:00" "27-11-2015"] send-to-user-fn)
       (is (= 
            {"asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}
                     {:id 21, :name "ASVZ Zürich"}]}
@@ -63,7 +63,8 @@
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
-      (find-command "user" ["asvz" "17:00-20:00" "27-11-2015"] send-to-user-fn)
+      (find-command "user" ["/find" "asvz" "17:00-20:00" "27-11-2015"] 
+                    send-to-user-fn)
       (is (= 
            {"asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}
                     {:id 21, :name "ASVZ Zürich"}]}
@@ -77,7 +78,8 @@
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz_fluntern.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
-      (find-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
+      (find-command "user" ["/find" "asvz" "10:00-11:00" "27-11-2015"]
+                    send-to-user-fn)
       (is (= 1 (count (get-in @db ["user" :find-history]))))))
 
   (testing "Command gets added at the end of the history"
@@ -89,7 +91,9 @@
                                  {6 "fixtures/hardhof.edn"
                                   13860 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
-      (find-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
-      (find-command "user" ["tennis" "10:00-11:00" "27-11-2015"] send-to-user-fn)
+      (find-command "user" ["/find" "asvz" "10:00-11:00" "27-11-2015"] 
+                    send-to-user-fn)
+      (find-command "user" ["/find" "tennis" "10:00-11:00" "27-11-2015"] 
+                    send-to-user-fn)
       (is (= 2 (count (get-in @db ["user" :find-history]))))
       (is (= ["tennis"] (:venues (last (get-in @db ["user" :find-history]))))))))

@@ -6,7 +6,7 @@
              [task :as task]]
             [gotcourts.bot-commands.message :as message]))
 
-(defn add-venue-map [scraper {:keys [venues] :as command}]
+(defn- add-venue-map [scraper {:keys [venues] :as command}]
   "Given a list of venue terms, retrieves the associated venue ids."
   (let [venue-map     (task/fetch-gotcourts-venues (partial scraper/fetch-venues scraper) venues)]
     (assoc command :chosen-venues venue-map)))
@@ -61,7 +61,7 @@
         handle-fn                (partial handle-message* scraper db)]
     (fn [user args send-to-user-fn]
       (let [[command error] (command/parse-command type-format-message-args 
-                                                   args format-message)]
+                                                   (rest args) format-message)]
         (if error
           (send-to-user-fn error)
           (handle-fn user command send-to-user-fn))))))
