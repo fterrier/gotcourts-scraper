@@ -21,34 +21,60 @@
                             (is (= :time (:type response))))]
       (find-command nil ["this" "is" "rubbish"] send-to-user-fn)))
 
-  (testing "Command find responds with alerts"
-    (let [send-to-user-fn (fn [response] 
+  (testing "Command find responds with free courts"
+    (let [send-to-user-fn (fn [response]
                             (is (= :new-alert (:success response)))
+                            (is (= [[:new-slot {:slot {:startTime 50400 :endTime 64800} :id 86}]
+                                    [:new-slot {:slot {:startTime 50400 :endTime 64800} :id 88}]
+                                    [:new-slot {:slot {:startTime 54000 :endTime 64800} :id 90}]] 
+                                   (get-in response [:options :alerts-venue-map :alerts])))
                             (is (nil? (:error response))))
           db (atom {})
-          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}
+          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz_fluntern.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
       (find-command "user" ["asvz" "17:00-20:00" "27-11-2015"] send-to-user-fn)
-      (is (= 1 (count (get-in @db ["user" :find-history]))))))
+      (is (= 
+           {"asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}]}
+           (:chosen-venues (first (get-in @db ["user" :find-history])))))))
 
-  (testing "Command find responds with alerts"
-    (let [send-to-user-fn (fn [response])
+  (testing "Command find prompts when more than one court"
+    (let [send-to-user-fn (fn [response]
+                            (is (= :ambiguous-venue (:success response)))
+                            (is (= ["asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}
+                                            {:id 21, :name "ASVZ Zürich"}]]
+                                   (get-in response [:options :ambiguous-venues])))
+                            (is (nil? (:error response))))
           db (atom {})
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
       (find-command "user" ["asvz" "17:00-20:00" "27-11-2015"] send-to-user-fn)
       (is (= 
-           [{:id 6, :name "ASVZ Tennisanlage Fluntern"}]
+           {"asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}
+                    {:id 21, :name "ASVZ Zürich"}]}
            (:chosen-venues (first (get-in @db ["user" :find-history])))))))
 
-  (testing "Command find has no alerts"
+  (testing "Answer to prompt restricts the venues"
+    (let [send-to-user-fn (fn [response]
+                            (is (= :ambiguous-venue (:success response)))
+                            (is (nil? (:error response))))
+          db (atom {})
+          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}
+                                 :availability-fixtures {6 "fixtures/hardhof.edn"}})
+          find-command (bot-commands/create-find-command scraper db)]
+      (find-command "user" ["asvz" "17:00-20:00" "27-11-2015"] send-to-user-fn)
+      (is (= 
+           {"asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}
+                    {:id 21, :name "ASVZ Zürich"}]}
+           (:chosen-venues (first (get-in @db ["user" :find-history])))))))
+
+  (testing "Command find has no notifications"
     (let [send-to-user-fn (fn [response] 
                             (is (= :no-alerts (:success response)))
                             (is (nil? (:error response))))
           db (atom {})
-          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}
+          scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz_fluntern.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
       (find-command "user" ["asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
