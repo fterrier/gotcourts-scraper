@@ -21,7 +21,7 @@
        (gotcourts-handler/app (partial scraper/scraper gotcourts-scraper/fetch-availabilities))
        (telegram-handler/app 
         ;; TODO use a configuration
-        "244753532:AAEm7RIud0nszMYOWepyE5lJpQwVt8bm1D8" "646f033b.ngrok.io" bot/bot)
+        "244753532:AAEm7RIud0nszMYOWepyE5lJpQwVt8bm1D8" "d726bc1f.ngrok.io" bot/bot)
        (route/not-found not-found))
       (wrap-defaults api-defaults)
       (run-jetty {:join? false

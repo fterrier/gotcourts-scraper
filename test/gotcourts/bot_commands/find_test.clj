@@ -63,12 +63,11 @@
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
-      (find-command "user" ["/find" "asvz" "17:00-20:00" "27-11-2015"] 
-                    send-to-user-fn)
+      (find-command "user" ["/find" "asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
+      (find-command "user" ["1." "ASVZ" "Tennisanlage" "Fluntern"] send-to-user-fn)
       (is (= 
-           {"asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}
-                    {:id 21, :name "ASVZ Zürich"}]}
-           (:chosen-venues (first (get-in @db ["user" :find-history])))))))
+           {"asvz" [{:id 6, :name "ASVZ Tennisanlage Fluntern"}]}
+           (:chosen-venues (last (get-in @db ["user" :find-history])))))))
 
   (testing "Command find has no notifications"
     (let [send-to-user-fn (fn [response] 
@@ -78,8 +77,7 @@
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz_fluntern.edn"}
                                  :availability-fixtures {6 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
-      (find-command "user" ["/find" "asvz" "10:00-11:00" "27-11-2015"]
-                    send-to-user-fn)
+      (find-command "user" ["/find" "asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 1 (count (get-in @db ["user" :find-history]))))))
 
   (testing "Command gets added at the end of the history"
@@ -91,9 +89,7 @@
                                  {6 "fixtures/hardhof.edn"
                                   13860 "fixtures/hardhof.edn"}})
           find-command (bot-commands/create-find-command scraper db)]
-      (find-command "user" ["/find" "asvz" "10:00-11:00" "27-11-2015"] 
-                    send-to-user-fn)
-      (find-command "user" ["/find" "tennis" "10:00-11:00" "27-11-2015"] 
-                    send-to-user-fn)
+      (find-command "user" ["/find" "asvz" "10:00-11:00" "27-11-2015"] send-to-user-fn)
+      (find-command "user" ["/find" "tennis" "10:00-11:00" "27-11-2015"] send-to-user-fn)
       (is (= 2 (count (get-in @db ["user" :find-history]))))
       (is (= ["tennis"] (:venues (last (get-in @db ["user" :find-history]))))))))

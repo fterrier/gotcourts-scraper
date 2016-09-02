@@ -29,47 +29,64 @@
         new-slots              (filter-alerts-slots alerts :new-slot)
         gone-slots             (filter-alerts-slots alerts :gone-slot)
         formatted-date         (f/unparse human-date-formatter date)]
-    (str (if new-venue 
-           (str "The venue " (:name venue) 
-                " has courts available on " formatted-date
-                " in the time you requested.\n")
-           (str "The venue " (:name venue) 
-                " has some changes on " formatted-date
-                " in the time you requested.\n"))
-         "\n"
-     (when-not (empty? new-slots)
-       (apply str "The following slots are available:\n"
-              (map #(get-slot-text (:courts venue) %) new-slots)))
-     (when (and (not (empty? gone-slots)) (not new-venue))
-       (apply str "The following slots are not available any more:\n" 
-              (map #(get-slot-text (:courts venue) %) gone-slots))))))
+    {:message
+     (str (if new-venue 
+            (str "The venue " (:name venue) 
+                 " has courts available on " formatted-date
+                 " in the time you requested.\n")
+            (str "The venue " (:name venue) 
+                 " has some changes on " formatted-date
+                 " in the time you requested.\n"))
+          "\n"
+          (when-not (empty? new-slots)
+            (apply str "The following slots are available:\n"
+                   (map #(get-slot-text (:courts venue) %) new-slots)))
+          (when (and (not (empty? gone-slots)) (not new-venue))
+            (apply str "The following slots are not available any more:\n" 
+                   (map #(get-slot-text (:courts venue) %) gone-slots))))
+     :options {:parse-mode :markdown}}))
 
 (defn- get-task-added-message [{:keys [date time chosen-venues]}]
   (let [[start-time end-time] time]
-    (str "Got it, will notify you as soon as a court is available at "
-         (str/join ", " (map :name chosen-venues)) " on "
-         (f/unparse human-date-formatter date) " between "
-         (from-seconds start-time) " and " (from-seconds end-time) ".")))
+    {:message
+     (str "Got it, will notify you as soon as a court is available at "
+          (str/join ", " (map :name chosen-venues)) " on "
+          (f/unparse human-date-formatter date) " between "
+          (from-seconds start-time) " and " (from-seconds end-time) ".")}))
 
 (defn- get-no-alerts-message [{:keys [date time chosen-venues]}]
   (let [formatted-date (f/unparse human-date-formatter date)]
-    (str "The venue " (str/join ", " (map :name chosen-venues)) " has no courts available on " formatted-date " in the time you requested.\n\nType /notify to get notified as soon as a court becomes available.")))
+    {:message 
+     (str "The venue " (str/join ", " (map :name chosen-venues)) " has no courts available on " 
+          formatted-date 
+          " in the time you requested.\n\nType /notify to get notified as soon as a court becomes available.")
+     :options {:parse-mode :markdown}}))
+
+(defn- get-ambiguous-venue-message [{:keys [date ambiguous-venues]}]
+  "- ambiguous-venues : [<term> [<venue>, ...]"
+  (let [[term venues] ambiguous-venues]
+    {:message
+     (str "Your search for " term " matched more than one venue. Please select one below:")
+     :options {:parse-mode :markdown
+               :reply-keyboard (map-indexed (fn [index elem] 
+                                              [{:text (str (inc index) ". " (:name elem))}]) venues)}}))
 
 (defn- get-no-command-history-message [_]
-  (str "We did not find any /find commands in your history. Please first search for courts using /find <courts> <time> <date>."))
+  {:message
+   (str "We did not find any /find commands in your history. Please first search for courts using /find <courts> <time> <date>.")})
 
 (defn get-message [{:keys [success error type options]}]
   (cond 
     (= success :task-added)
-    {:message (get-task-added-message options)}
+    (get-task-added-message options)
     (= success :new-alert)
-    {:message (get-new-alerts-message options)
-     :options {:parse-mode :markdown}}
+    (get-new-alerts-message options)
     (= success :no-alerts)
-    {:message (get-no-alerts-message options)
-     :options {:parse-mode :markdown}}
+    (get-no-alerts-message options)
+    (= success :ambiguous-venue)
+    (get-ambiguous-venue-message options)
     (= error :no-command-history)
-    {:message (get-no-command-history-message options)}))
+    (get-no-command-history-message options)))
 
 (defn assoc-message [response]
   (assoc response :text (get-message response)))

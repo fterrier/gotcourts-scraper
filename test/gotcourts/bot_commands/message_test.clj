@@ -49,4 +49,13 @@
              :options {:command "/notify"
                        :date test-date
                        :time [42000 48000]
-                       :chosen-venues [{:id 5 :name "TA Irchel"}]}})))))
+                       :chosen-venues [{:id 5 :name "TA Irchel"}]}}))))
+  
+  (testing "Message on ambiguous venue"
+    (is (= {:message "Your search for venue matched more than one venue. Please select one below:"
+            :options {:parse-mode :markdown
+                      :reply-keyboard [["1. Venue 1" "2. Venue 2"]]}}
+           (message/get-message
+            {:success :ambiguous-venue
+             :options {:ambiguous-venues ["venue" [{:id 1 :name "Venue 1"}
+                                                   {:id 2 :name "Venue 2"}]]}})))))
