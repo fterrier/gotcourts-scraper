@@ -57,6 +57,7 @@
 
   (testing "Answer to prompt restricts the venues"
     (let [send-to-user-fn (fn [response]
+                            
                             (is (= :ambiguous-venue (:success response)))
                             (is (nil? (:error response))))
           db (atom {})

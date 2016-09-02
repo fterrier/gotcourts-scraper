@@ -54,7 +54,7 @@
   (testing "Message on ambiguous venue"
     (is (= {:message "Your search for venue matched more than one venue. Please select one below:"
             :options {:parse-mode :markdown
-                      :reply-keyboard [["1. Venue 1" "2. Venue 2"]]}}
+                      :reply-keyboard [[{:text "1. Venue 1"}] [{:text "2. Venue 2"}]]}}
            (message/get-message
             {:success :ambiguous-venue
              :options {:ambiguous-venues ["venue" [{:id 1 :name "Venue 1"}
