@@ -4,6 +4,7 @@
              [scheduler :as scheduler]
              [scraper :as scraper]]
             [bot.bot :as bot]
+            [bot.matcher :as matcher]
             [clojure.core.async :refer [>!!]]
             [gotcourts.bot-commands
              [notify :as notify-command]
@@ -38,15 +39,14 @@
          (get-message response)
          text)))
 
-(defn- match-first [text]
-  (fn [args] (= (first args) text)))
-
 (defn- start-bot []
-  (let [commands   [{:match-fn (match-first "/notify") 
+  (let [commands   [{:match-fn (matcher/match-first "/notify") 
                      :handle-fn (create-notify-command database/db)}
-                    {:match-fn (match-first "/show")
+                    {:match-fn (matcher/match-first "/show")
                      :handle-fn (create-show-command database/db)}
-                    {:match-fn (match-first "/find")
+                    {:match-fn (matcher/match-or 
+                                (matcher/match-first "/find") 
+                                (matcher/match-first-pattern #"^\d*"))
                      :handle-fn (create-find-command database/db)}]
         bot        (bot/create-bot commands)]
     (fn [data ch]

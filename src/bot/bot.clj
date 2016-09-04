@@ -10,19 +10,25 @@
 (defn- parse-message [{:keys [message] :as data}]
   "Takes a telegram message and parses it to {:user ... :command-key ... :error ...}"
   (log/info "Parsing message" message)
-  (let [user (:from message)
-        args (parse-command (:text message))]
+  (let [user       (:from message)
+        args       (parse-command (:text message))
+        message-id (:message_id message)]
     {:user user
-     :args args}))
+     :args args
+     :message-id message-id}))
+
+(defn- find-command [commands message]
+  (some (fn [{:keys [match-fn] :as command}] 
+          (when (match-fn message) command)) commands))
 
 (defn handle-message* [commands data send-to-user-fn]
   (log/info "Incoming message for bot" data)
-  (let [{:keys [user args]} (parse-message data)
-        command             (some (fn [{:keys [match-fn] :as command}] 
-                                    (when (match-fn args) command)) commands)]
-    (log/info "Got command for args\"" args ":" command)
+  (let [message     (parse-message data)
+        command     (find-command commands message)
+        response-fn (fn [response] (send-to-user-fn response command))]
+    (log/info "Got command for message: " message command)
     (if-not (nil? command)
-      ((:handle-fn command) user args (fn [response] (send-to-user-fn response command)))
+      ((:handle-fn command) message response-fn)
       (send-to-user-fn {:error :command-not-found} nil))))
 
 (defn- send-to-user-with-log-fn [send-to-user-fn response command]

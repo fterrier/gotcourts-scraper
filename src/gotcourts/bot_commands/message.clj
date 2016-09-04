@@ -46,28 +46,32 @@
                    (map #(get-slot-text (:courts venue) %) gone-slots))))
      :options {:parse-mode :markdown}}))
 
+(defn- chosen-venue-names [chosen-venues]
+  (map (fn [[_ venues]] (:name (first venues))) chosen-venues))
+
 (defn- get-task-added-message [{:keys [date time chosen-venues]}]
   (let [[start-time end-time] time]
     {:message
      (str "Got it, will notify you as soon as a court is available at "
-          (str/join ", " (map :name chosen-venues)) " on "
+          (str/join ", " (chosen-venue-names chosen-venues)) " on "
           (f/unparse human-date-formatter date) " between "
           (from-seconds start-time) " and " (from-seconds end-time) ".")}))
 
 (defn- get-no-alerts-message [{:keys [date time chosen-venues]}]
   (let [formatted-date (f/unparse human-date-formatter date)]
     {:message 
-     (str "The venue " (str/join ", " (map :name chosen-venues)) " has no courts available on " 
-          formatted-date 
+     (str "The venue " (str/join ", " (chosen-venue-names chosen-venues)) 
+          " has no courts available on " formatted-date 
           " in the time you requested.\n\nType /notify to get notified as soon as a court becomes available.")
      :options {:parse-mode :markdown}}))
 
-(defn- get-ambiguous-venue-message [{:keys [date ambiguous-venues]}]
+(defn- get-ambiguous-venue-message [{:keys [date ambiguous-venues message-id]}]
   "- ambiguous-venues : [<term> [<venue>, ...]"
   (let [[term venues] ambiguous-venues]
     {:message
      (str "Your search for " term " matched more than one venue. Please select one below:")
      :options {:parse-mode :markdown
+               :message-id message-id
                :reply-keyboard (map-indexed (fn [index elem] 
                                               [{:text (str (inc index) ". " (:name elem))}]) venues)}}))
 

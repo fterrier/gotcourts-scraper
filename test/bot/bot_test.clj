@@ -18,7 +18,7 @@
              :text text}})
 
 (defn- match-first [text]
-  (fn [args] (= (first args) text)))
+  (fn [{:keys [args]}] (= (first args) text)))
 
 (deftest parse-message-add-test
   (testing "Error when command not found"
@@ -28,7 +28,7 @@
       (bot/handle-message* [] (telegram-message "garbage") send-to-user-fn)))
 
   (testing "User parses correctly"
-    (let [handle-fn (fn [user _ _]
+    (let [handle-fn (fn [{:keys [user]} _]
                       (is (= user {:id 86757011
                                    :first_name "François"
                                    :last_name "Terrier"
@@ -36,21 +36,21 @@
       (bot/handle-message* [{:match-fn (match-first "test") :handle-fn handle-fn}] (telegram-message "test") nil)))
   
   (testing "Args are passed correctly"
-    (let [handle-fn (fn [_ args _]
+    (let [handle-fn (fn [{:keys [args]} _]
                       (is (= args ["test" "this" "is" "a" "test"])))]
       (bot/handle-message* [{:match-fn (match-first "test") :handle-fn handle-fn}] (telegram-message " test this is   a  test") nil)))
 
   (testing "Same matcher takes first one"
     (let [commands [{:match-fn (match-first "test") 
-                     :handle-fn (fn [_ _ _] (is true))}
+                     :handle-fn (fn [_ _] (is true))}
                     {:match-fn (match-first "test") 
-                     :handle-fn (fn [_ _ _] (is false))}]]
+                     :handle-fn (fn [_ _] (is false))}]]
       (bot/handle-message* commands (telegram-message "test") nil))))
 
 (deftest create-bot-test  
   (testing "Bot with good command creates succesfully"
-    (let [commands [{:match-fn (match-first "test1") :handle-fn (fn [_ _ send-fn] (send-fn {:success :test1}))}
-                    {:match-fn (match-first "test2") :handle-fn (fn [_ _ _])}]
+    (let [commands [{:match-fn (match-first "test1") :handle-fn (fn [_ send-fn] (send-fn {:success :test1}))}
+                    {:match-fn (match-first "test2") :handle-fn (fn [_ _])}]
           bot      (bot/create-bot commands)
           send-to-user-fn (fn [response command]
                             (is (not (nil? command)))

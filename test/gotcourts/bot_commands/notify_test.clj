@@ -29,7 +29,7 @@
           send-to-user-fn (fn [response] 
                             (is (= :format-error (:error response)))
                             (is (= :too-many-args (:type response))))]
-      (notify-command nil ["this" "is" "rubbish"] send-to-user-fn)))
+      (notify-command {:args ["this" "is" "rubbish"]} send-to-user-fn)))
 
   (testing "Command notify adds the task and respond success"
     (let [schedule-fn (fn [_ _] :mock-stop-fn)
@@ -39,7 +39,7 @@
           db (atom {"user" {:find-history test-history}})
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
           notify-command (bot-commands/create-notify-command schedule-fn scraper db)]
-      (notify-command "user" [] send-to-user-fn)
+      (notify-command {:user "user" :args []} send-to-user-fn)
       (is (= 1 (count @db)))
       (let [tasks    (get-in @db ["user" :tasks])
             [_ task] (first tasks)]
@@ -57,7 +57,7 @@
           db (atom {"user" {:find-history test-history}})
           scraper (mock-scraper {:venue-fixtures {"asvz" "fixtures/asvz.edn"}})
           notify-command (bot-commands/create-notify-command schedule-fn scraper db)]
-      (notify-command "user" [] send-to-user-fn)
+      (notify-command {:user "user" :args []} send-to-user-fn)
       (is (= 1 (count @db)))))
   
   (testing "Command notify after find sets notification for find - scraper not used"
@@ -67,7 +67,7 @@
                             (is (nil? (:error response))))
           db (atom {"user" {:find-history test-history}})
           notify-command (bot-commands/create-notify-command schedule-fn nil db)]
-      (notify-command "user" [] send-to-user-fn)
+      (notify-command {:user "user" :args []} send-to-user-fn)
       (is (= 1 (count @db)))
       (let [tasks    (get-in @db ["user" :tasks])
             [_ task] (first tasks)]
@@ -79,4 +79,4 @@
                             (is (= :no-command-history (:error response))))
           db (atom {})
           notify-command (bot-commands/create-notify-command nil nil db)]
-      (notify-command "user" [] send-to-user-fn))))
+      (notify-command {:user "user" :args []} send-to-user-fn))))

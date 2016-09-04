@@ -13,12 +13,14 @@
                   (log/error "Telegram - Failed, exception is " error status body)
                   (log/info "Telegram - Async HTTP GET: " status body))))))
 
-(defn- get-telegram-options [{:keys [parse-mode reply-keyboard] :as options}]
+(defn- get-telegram-options [{:keys [parse-mode reply-keyboard message-id] 
+                              :as options}]
   "Options can be :
     - parse-mode: :markdown or nil
     - reply-keyboard: a vector of vector"
   (cond-> {}
     parse-mode (assoc :parse_mode (name parse-mode))
+    message-id (assoc :reply_to_message_id message-id)
     reply-keyboard (assoc :reply_markup (json/encode {:keyboard reply-keyboard}))))
 
 (defn send-message 

@@ -29,7 +29,7 @@
         fetched-data (fetch-parallel venue-fn params-list)]
     (->> fetched-data
          (map (fn [[{:keys [search]} data]]
-                [search (map #(select-keys % [:id :name]) data)]))
+                [search (into [] (map #(select-keys % [:id :name]) data))]))
          (into {}))))
 
 (defn fetch-gotcourts-availabilities [availability-fn ids date start-time end-time]

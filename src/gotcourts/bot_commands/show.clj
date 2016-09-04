@@ -10,7 +10,7 @@
     {:success :show-no-tasks}
     {:success :show :options user-tasks}))
 
-(defn handle-show* [tasks-db user _ send-to-user-fn]
+(defn handle-show* [tasks-db {:keys [user]} send-to-user-fn]
   (let [response (render-tasks (get-in @tasks-db [user :tasks]))]  
     (send-to-user-fn 
      (assoc response :text (get-message response)))))

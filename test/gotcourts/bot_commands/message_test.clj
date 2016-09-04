@@ -42,6 +42,15 @@
                        :new-venue false
                        :alerts-venue-map test-alerts}}))))
   
+  (testing "Message on no alert for venue"
+    (is (= {:message "The venue TA Mythenquai (Sportamt) has no courts available on Fri, 27 Nov 2015 in the time you requested.\n\nType /notify to get notified as soon as a court becomes available.",
+
+            :options {:parse-mode :markdown}}
+           (message/get-message
+            {:success :no-alerts
+             :options {:date test-date
+                       :chosen-venues {"sportamt" [{:id 5 :name "TA Mythenquai (Sportamt)"}]}}}))))
+
   (testing "Message on new task"
     (is (= {:message "Got it, will notify you as soon as a court is available at TA Irchel on Fri, 27 Nov 2015 between 11:40 and 13:20."}
            (message/get-message
@@ -49,7 +58,7 @@
              :options {:command "/notify"
                        :date test-date
                        :time [42000 48000]
-                       :chosen-venues [{:id 5 :name "TA Irchel"}]}}))))
+                       :chosen-venues {"irchel" [{:id 5 :name "TA Irchel"}]}}}))))
   
   (testing "Message on ambiguous venue"
     (is (= {:message "Your search for venue matched more than one venue. Please select one below:"
