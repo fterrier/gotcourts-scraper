@@ -16,8 +16,9 @@
                  [jarohen/chime "0.1.9"]
                  [org.clojure/tools.logging "0.3.1"]
                  [funcool/cats "1.2.1"]
-                 [wit/duckling "0.4.8"]]
-  ; :main ^:skip-aot gotcourts.core
+                 [wit/duckling "0.4.8"]
+                 [org.clojure/tools.cli "0.3.5"]]
+  :main ^:skip-aot app.main
   :uberjar-name "gotcourts.jar"
   :target-path "target/%s"
   :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]]

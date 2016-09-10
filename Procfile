@@ -1,1 +1,1 @@
-web: java $JVM_OPTS -cp target/uberjar/gotcourts.jar clojure.main -m gotcourts.server
+web: java $JVM_OPTS -cp target/uberjar/gotcourts.jar clojure.main -m app.main -p $PORT

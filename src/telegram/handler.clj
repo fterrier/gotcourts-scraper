@@ -48,6 +48,7 @@
   "The handler is a function that takes the following arguments:
    - body : the original request body
    - channel : how to talk back to the client"
+  (log/info "Starting telegram handler with " bot-id webhook-domain)
   (let [message-ch  (chan 10)
         client-atom (atom {})
         msg-handler (event-msg-handler* message-ch client-atom bot-id)]
