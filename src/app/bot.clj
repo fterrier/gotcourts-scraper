@@ -3,13 +3,15 @@
              [database :as database]
              [scheduler :as scheduler]
              [scraper :as scraper]]
-            [bot.bot :as bot]
-            [bot.matcher :as matcher]
+            [bot
+             [bot :as bot]
+             [matcher :as matcher]]
             [clojure.core.async :refer [>!!]]
             [gotcourts.bot-commands
+             [find :as find-command]
              [notify :as notify-command]
              [show :as show-command]
-             [find :as find-command]]
+             [help :as help-command]]
             [mount.core :refer [defstate]]
             [ring.util.response :refer [response]]
             [scheduler.scheduler :as task-scheduler]))
@@ -26,6 +28,9 @@
 
 (defn- create-find-command [db]
   (find-command/create-find-command scraper/scraper db))
+
+(defn- create-help-command []
+  (help-command/create-help-command))
 
 (defn- get-message [{:keys [error success] :as response}]
   (cond
@@ -47,7 +52,11 @@
                     {:match-fn (matcher/match-or 
                                 (matcher/match-first "/find") 
                                 (matcher/match-first-pattern #"^\d*"))
-                     :handle-fn (create-find-command database/db)}]
+                     :handle-fn (create-find-command database/db)}
+                    {:match-fn (matcher/match-or 
+                                (matcher/match-first "/help")
+                                (matcher/match-first "/start"))
+                     :handle-fn (create-help-command)}]
         bot        (bot/create-bot commands)]
     (fn [data ch]
       (bot data (partial send-to-user ch)))))

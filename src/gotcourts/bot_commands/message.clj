@@ -43,7 +43,8 @@
                    (map #(get-slot-text (:courts venue) %) new-slots)))
           (when (and (not (empty? gone-slots)) (not new-venue))
             (apply str "The following slots are not available any more:\n" 
-                   (map #(get-slot-text (:courts venue) %) gone-slots))))
+                   (map #(get-slot-text (:courts venue) %) gone-slots)))
+          "\n\nType /notify to get notified as soon as a court becomes available.")
      :options {:parse-mode :markdown}}))
 
 (defn- chosen-venue-names [chosen-venues]

@@ -3,7 +3,7 @@
 (defn- get-message [{:keys [success options] :as message}]
   (case success
     :show {:message (str options)}
-    :show-no-tasks {:message "At the moment you have no tasks. Use /notify to add a task."}))
+    :show-no-tasks {:message "At the moment you have no tasks. Use /find to search for available courts."}))
 
 (defn- render-tasks [user-tasks]
   (if (empty? user-tasks)
